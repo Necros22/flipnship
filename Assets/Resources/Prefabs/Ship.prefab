@@ -179,6 +179,8 @@ GameObject:
   m_Component:
   - component: {fileID: 7851219639193987758}
   - component: {fileID: 4004031455203392818}
+  - component: {fileID: 9077295232610454281}
+  - component: {fileID: 3986503007730222932}
   m_Layer: 0
   m_Name: Ship
   m_TagString: Untagged
@@ -219,6 +221,56 @@ MonoBehaviour:
   ship: {fileID: 8623763121405219212}
   maxRotationAngle: 10
   rotationSmooth: 5
+--- !u!54 &9077295232610454281
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8698726217803835227}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!136 &3986503007730222932
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8698726217803835227}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 3.7342224
+  m_Height: 7.468445
+  m_Direction: 1
+  m_Center: {x: 0, y: -0.09901047, z: 9.636688}
 --- !u!1001 &8893671447788383453
 PrefabInstance:
   m_ObjectHideFlags: 0
