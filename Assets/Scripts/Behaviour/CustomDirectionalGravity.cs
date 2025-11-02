@@ -1,4 +1,4 @@
-using UnityEngine;
+锘縰sing UnityEngine;
 
 public class CustomDirectionalGravity : MonoBehaviour
 {
@@ -10,8 +10,8 @@ public class CustomDirectionalGravity : MonoBehaviour
         Up
     }
 
-    [Header("Configuraci髇 de gravedad personalizada")]
-    public GravityDirection gravityDirection = GravityDirection.Down; // Direcci髇 elegida desde el inspector
+    [Header("Configuraci贸n de gravedad personalizada")]
+    public GravityDirection gravityDirection = GravityDirection.Down; // Direcci贸n elegida desde el inspector
     public float gravityStrength = 9.81f; // Intensidad de la gravedad
 
     private Rigidbody rb;
@@ -26,7 +26,7 @@ public class CustomDirectionalGravity : MonoBehaviour
     {
         Vector3 direction = Vector3.zero;
 
-        // Seg鷑 la direcci髇 elegida, aplicamos la fuerza correspondiente
+        // Seg煤n la direcci贸n elegida, aplicamos la fuerza correspondiente
         switch (gravityDirection)
         {
             case GravityDirection.Up:
@@ -44,5 +44,29 @@ public class CustomDirectionalGravity : MonoBehaviour
         }
 
         rb.AddForce(direction * gravityStrength, ForceMode.Acceleration);
+    }
+
+    /// <summary>
+    /// Invierte la direcci贸n actual de la gravedad.
+    /// </summary>
+    public void AntiGravityChange()
+    {
+        switch (gravityDirection)
+        {
+            case GravityDirection.Up:
+                gravityDirection = GravityDirection.Down;
+                break;
+            case GravityDirection.Down:
+                gravityDirection = GravityDirection.Up;
+                break;
+            case GravityDirection.Left:
+                gravityDirection = GravityDirection.Right;
+                break;
+            case GravityDirection.Right:
+                gravityDirection = GravityDirection.Left;
+                break;
+        }
+
+        Debug.Log($"馃寑 Gravedad invertida: ahora apunta hacia {gravityDirection}");
     }
 }
