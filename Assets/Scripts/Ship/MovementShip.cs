@@ -11,15 +11,56 @@ public class MovementShip : MonoBehaviour
     [SerializeField] private float maxRotationAngle = 30f;
     [SerializeField] private float rotationSmooth = 5f;
 
-    private void Update()
+    private float horizontalInput;
+    private float verticalInput;
+
+    private int cameraRotIndex = 0; // 0=normal,1=90°,2=180°,3=270°
+
+    public void SetRotationIndex(int index)
     {
+        cameraRotIndex = index;
+    }
+
+    void Update()
+    {
+        if (Time.timeScale == 0f) return;
+        HandleInput();
         MoveForward();
         Move();
         RotateShip();
     }
 
-    private float horizontalInput;
-    private float verticalInput;
+    void HandleInput()
+    {
+        float rawH = Input.GetAxisRaw("Horizontal");
+        float rawV = Input.GetAxisRaw("Vertical");
+
+        // Re-map WASD based on camera rotation
+        switch (cameraRotIndex)
+        {
+            case 0: // normal
+                horizontalInput = rawH;
+                verticalInput = rawV;
+                break;
+
+            case 1: // 90° giro
+                horizontalInput = -rawV;
+                verticalInput = rawH;
+                break;
+
+            case 2: // 180°
+                horizontalInput = -rawH;
+                verticalInput = -rawV;
+                break;
+
+            case 3: // 270°
+                horizontalInput = rawV;
+                verticalInput = -rawH;
+                break;
+        }
+
+
+    }
 
     private void MoveForward()
     {
@@ -28,11 +69,7 @@ public class MovementShip : MonoBehaviour
 
     private void Move()
     {
-        horizontalInput = Input.GetAxisRaw("Horizontal");
-        verticalInput = Input.GetAxisRaw("Vertical");
-
         Vector3 movement = new Vector3(horizontalInput, verticalInput, 0) * speed * Time.deltaTime;
-
         transform.Translate(movement, Space.World);
     }
 

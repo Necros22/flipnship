@@ -1,51 +1,102 @@
-using UnityEngine;
+Ôªøusing UnityEngine;
+using System.Collections;
 
 public class GravityControl : MonoBehaviour
 {
     [Header("Referencia al objeto que contiene los props con CustomDirectionalGravity")]
-    public GameObject gravityAnchor; // Se asigna el objeto "GravityAnchor" desde el Inspector
+    public GameObject gravityAnchor;
+
+    [Header("Referencia a la c√°mara que debe rotar")]
+    public Transform cameraHolder;
+
+    [Header("Referencia a la nave (MovementShip)")]
+    public MovementShip shipMovement; // drag your ship here just for passing rotationIndex
+
+    private float rotationStep = 90f;
+    private bool isRotating = false;
+
+    // cu√°ntas rotaciones lleva la c√°mara (0,1,2,3)
+    [HideInInspector] public int currentCameraRotation = 0;
 
     void Update()
     {
-        if (gravityAnchor == null) return;
+        if (gravityAnchor == null || cameraHolder == null) return;
 
-        // Girar a la izquierda (Q)
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (Input.GetKeyDown(KeyCode.Q) && !isRotating)
         {
             RotateGravity(-1);
+            RotateCamera(+rotationStep);
+            UpdateRotationIndex(+1);
         }
 
-        // Girar a la derecha (E)
-        if (Input.GetKeyDown(KeyCode.E))
+        if (Input.GetKeyDown(KeyCode.E) && !isRotating)
         {
             RotateGravity(1);
+            RotateCamera(-rotationStep);
+            UpdateRotationIndex(-1);
         }
+    }
+
+    private void UpdateRotationIndex(int dir)
+    {
+        currentCameraRotation = (currentCameraRotation + dir) % 4;
+        if (currentCameraRotation < 0) currentCameraRotation += 4;
+
+        // pasamos la info a la nave
+        if (shipMovement != null)
+            shipMovement.SetRotationIndex(currentCameraRotation);
     }
 
     private void RotateGravity(int direction)
     {
-        // Recorremos todos los hijos del objeto "GravityAnchor"
         for (int i = 0; i < gravityAnchor.transform.childCount; i++)
         {
             Transform child = gravityAnchor.transform.GetChild(i);
-            CustomDirectionalGravity customGravity = child.GetComponent<CustomDirectionalGravity>();
+            CustomDirectionalGravity gravity = child.GetComponent<CustomDirectionalGravity>();
 
-            if (customGravity != null)
+            if (gravity != null)
             {
-                int currentIndex = (int)customGravity.gravityDirection;
+                int currentIndex = (int)gravity.gravityDirection;
                 int total = System.Enum.GetValues(typeof(CustomDirectionalGravity.GravityDirection)).Length;
 
-                // Calculamos el nuevo Ìndice con rotaciÛn circular
                 int newIndex = (currentIndex + direction) % total;
                 if (newIndex < 0) newIndex += total;
 
-                // Asignamos la nueva direcciÛn
-                customGravity.gravityDirection = (CustomDirectionalGravity.GravityDirection)newIndex;
-
-                // Mostrar en consola el cambio
-                Debug.Log($"[{child.name}] nueva direcciÛn de gravedad: {customGravity.gravityDirection}");
+                gravity.gravityDirection = (CustomDirectionalGravity.GravityDirection)newIndex;
             }
         }
     }
-}
 
+    IEnumerator SmoothRotate(float angle)
+    {
+        isRotating = true;
+
+        // ‚úÖ Freeze everything
+        Time.timeScale = 0f;
+
+        float duration = 0.35f;
+        float t = 0f;
+
+        Quaternion startRot = cameraHolder.rotation;
+        Quaternion endRot = cameraHolder.rotation * Quaternion.Euler(0, 0, angle);
+
+        while (t < duration)
+        {
+            cameraHolder.rotation = Quaternion.Lerp(startRot, endRot, t / duration);
+            t += Time.unscaledDeltaTime; // ‚úÖ ignore timeScale
+            yield return null;
+        }
+
+        cameraHolder.rotation = endRot;
+
+        // ‚úÖ Resume game
+        Time.timeScale = 1f;
+
+        isRotating = false;
+    }
+
+    private void RotateCamera(float angle)
+    {
+        StartCoroutine(SmoothRotate(angle));
+    }
+}
