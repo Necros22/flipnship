@@ -67,6 +67,6 @@ public class CustomDirectionalGravity : MonoBehaviour
                 break;
         }
 
-        Debug.Log($"🌀 Gravedad invertida: ahora apunta hacia {gravityDirection}");
+        Debug.Log($"Gravedad invertida: ahora apunta hacia {gravityDirection}");
     }
 }

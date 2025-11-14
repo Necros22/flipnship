@@ -25,9 +25,9 @@ public class CursorRayVisualizer : MonoBehaviour
         cam = Camera.main;
 
         if (cam == null)
-            Debug.LogError("❌ No se encontró una cámara con el tag 'MainCamera'.");
+            Debug.LogError("No se encontró una cámara con el tag 'MainCamera'.");
         if (pivotCamera == null)
-            Debug.LogError("❌ No se asignó el PivotCamera.");
+            Debug.LogError("No se asignó el PivotCamera.");
 
         // ✅ Excluir solo el layer Player
         ignorePlayerMask = ~LayerMask.GetMask("Player");
@@ -93,27 +93,27 @@ public class CursorRayVisualizer : MonoBehaviour
 
             if (hit.collider.CompareTag("GravityAffected"))
             {
-                Debug.Log($"💥 Disparo ejecutado hacia {hit.collider.name} a {rayLength:F1} unidades.");
+                Debug.Log($"Disparo ejecutado hacia {hit.collider.name} a {rayLength:F1} unidades.");
 
                 CustomDirectionalGravity gravityScript = hit.collider.GetComponent<CustomDirectionalGravity>();
                 if (gravityScript != null)
                 {
                     gravityScript.AntiGravityChange();
-                    Debug.Log($"🪐 Se llamó a AntiGravityChange() en {hit.collider.name}.");
+                    Debug.Log($"Se llamó a AntiGravityChange() en {hit.collider.name}.");
                 }
                 else
                 {
-                    Debug.LogWarning($"⚠️ {hit.collider.name} no tiene un componente CustomDirectionalGravity.");
+                    Debug.LogWarning($"{hit.collider.name} no tiene un componente CustomDirectionalGravity.");
                 }
             }
             else
             {
-                Debug.Log($"🔸 Disparo sin efecto: impactó en {hit.collider.name} (sin tag válida).");
+                Debug.Log($"Disparo sin efecto: impactó en {hit.collider.name} (sin tag válida).");
             }
         }
         else
         {
-            Debug.Log("🚀 Disparo al vacío (no impactó ningún objeto).");
+            Debug.Log("Disparo al vacío (no impactó ningún objeto).");
         }
 
         Debug.DrawRay(origin, direction * rayLength, clickRayColor, clickRayDuration);
