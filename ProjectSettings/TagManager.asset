@@ -7,6 +7,7 @@ TagManager:
   - Ring
   - Gwall
   - GravityAffected
+  - Damage
   layers:
   - Default
   - TransparentFX
