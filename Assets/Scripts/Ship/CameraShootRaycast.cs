@@ -1,7 +1,14 @@
 ﻿using UnityEngine;
 
-public class CursorRayVisualizer : MonoBehaviour
+public class CameraShootRaycast : MonoBehaviour
 {
+    public enum ShotType
+    {
+        AntiGravity = 1,
+        ZeroGravity = 2,
+        MaxGravity = 3
+    }
+
     [Header("Referencias")]
     public Transform pivotCamera;
 
@@ -16,9 +23,21 @@ public class CursorRayVisualizer : MonoBehaviour
 
     private Camera cam;
     private float currentRayDistance;
-
-    // ✅ LayerMask para ignorar el Player
     private int ignorePlayerMask;
+
+    // ------------------------------------
+    //      CONTROL DE DISPAROS NUEVO
+    // ------------------------------------
+    [Header("Control General de Disparos")]
+    public bool shootingEnabled = true;   // ← Activar/desactivar todo el sistema
+
+    [Header("Desbloqueo de Tipos de Disparo")]
+    public bool unlockAntiGravity = true;
+    public bool unlockZeroGravity = true;
+    public bool unlockMaxGravity = true;
+
+    [Header("Tipo de Disparo Actual")]
+    public ShotType currentShotType = ShotType.AntiGravity; // ← Por defecto el 1
 
     void Start()
     {
@@ -26,10 +45,11 @@ public class CursorRayVisualizer : MonoBehaviour
 
         if (cam == null)
             Debug.LogError("No se encontró una cámara con el tag 'MainCamera'.");
+
         if (pivotCamera == null)
             Debug.LogError("No se asignó el PivotCamera.");
 
-        // ✅ Excluir solo el layer Player
+        // Ignorar layer Player
         ignorePlayerMask = ~LayerMask.GetMask("Player");
     }
 
@@ -38,12 +58,42 @@ public class CursorRayVisualizer : MonoBehaviour
         if (cam == null || pivotCamera == null)
             return;
 
+        HandleShotSelection();
         UpdateAimRay();
 
         if (Input.GetMouseButtonDown(0))
             FireRay();
     }
 
+    // ------------------------------------
+    //        SELECCIÓN DE DISPARO
+    // ------------------------------------
+    void HandleShotSelection()
+    {
+        if (!shootingEnabled) return;
+
+        if (Input.GetKeyDown(KeyCode.Alpha1) && unlockAntiGravity) 
+        {
+            print("AntiGravity");
+            currentShotType = ShotType.AntiGravity;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha2) && unlockZeroGravity)
+        {
+            print("ZeroGravity");
+            currentShotType = ShotType.ZeroGravity;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha3) && unlockMaxGravity)
+        {
+            print("MaxGravity");
+            currentShotType = ShotType.MaxGravity;
+        }
+    }
+
+    // ------------------------------------
+    //              RAY VISUAL
+    // ------------------------------------
     void UpdateAimRay()
     {
         Ray cameraRay = cam.ScreenPointToRay(Input.mousePosition);
@@ -60,12 +110,11 @@ public class CursorRayVisualizer : MonoBehaviour
         if (Physics.Raycast(origin, direction, out RaycastHit hit, maxDynamicDistance, ignorePlayerMask))
         {
             currentRayDistance = hit.distance;
-            Debug.DrawRay(origin, direction * currentRayDistance, idleRayColor);
 
             if (hit.collider.CompareTag("GravityAffected"))
-            {
                 Debug.DrawRay(origin, direction * currentRayDistance, Color.green);
-            }
+            else
+                Debug.DrawRay(origin, direction * currentRayDistance, idleRayColor);
         }
         else
         {
@@ -74,10 +123,20 @@ public class CursorRayVisualizer : MonoBehaviour
         }
     }
 
+    // ------------------------------------
+    //              DISPARO
+    // ------------------------------------
     void FireRay()
     {
+        if (!shootingEnabled)
+        {
+            Debug.Log("Disparo desactivado.");
+            return;
+        }
+
         Ray cameraRay = cam.ScreenPointToRay(Input.mousePosition);
         Vector3 targetPoint;
+
         if (Physics.Raycast(cameraRay, out RaycastHit cameraHit, maxRayDistance, ignorePlayerMask))
             targetPoint = cameraHit.point;
         else
@@ -87,35 +146,52 @@ public class CursorRayVisualizer : MonoBehaviour
         Vector3 direction = (targetPoint - origin).normalized;
 
         float rayLength = maxDynamicDistance;
+
         if (Physics.Raycast(origin, direction, out RaycastHit hit, maxDynamicDistance, ignorePlayerMask))
         {
             rayLength = hit.distance;
 
-            if (hit.collider.CompareTag("GravityAffected"))
-            {
-                Debug.Log($"Disparo ejecutado hacia {hit.collider.name} a {rayLength:F1} unidades.");
+            Debug.DrawRay(origin, direction * rayLength, clickRayColor, clickRayDuration);
 
-                CustomDirectionalGravity gravityScript = hit.collider.GetComponent<CustomDirectionalGravity>();
-                if (gravityScript != null)
-                {
-                    gravityScript.AntiGravityChange();
-                    Debug.Log($"Se llamó a AntiGravityChange() en {hit.collider.name}.");
-                }
-                else
-                {
-                    Debug.LogWarning($"{hit.collider.name} no tiene un componente CustomDirectionalGravity.");
-                }
-            }
-            else
+            if (!hit.collider.CompareTag("GravityAffected"))
             {
-                Debug.Log($"Disparo sin efecto: impactó en {hit.collider.name} (sin tag válida).");
+                Debug.Log($"Impacto sin efecto en {hit.collider.name}");
+                return;
+            }
+
+            CustomDirectionalGravity gravityScript = hit.collider.GetComponent<CustomDirectionalGravity>();
+
+            if (gravityScript == null)
+            {
+                Debug.LogWarning($"{hit.collider.name} no tiene CustomDirectionalGravity.");
+                return;
+            }
+
+            // --------------------------------
+            //       APLICAR EFECTO SEGÚN TIPO
+            // --------------------------------
+            switch (currentShotType)
+            {
+                case ShotType.AntiGravity:
+                    gravityScript.AntiGravityChange();
+                    Debug.Log("Disparo AntiGravity → AntiGravityChange()");
+                    break;
+
+                case ShotType.ZeroGravity:
+                    gravityScript.ActivateZeroGravity();
+                    Debug.Log("Disparo ZeroGravity → ActivateZeroGravity()");
+                    break;
+
+                case ShotType.MaxGravity:
+                    gravityScript.ActivateMaxGravity();
+                    Debug.Log("Disparo MaxGravity → ActivateMaxGravity()");
+                    break;
             }
         }
         else
         {
-            Debug.Log("Disparo al vacío (no impactó ningún objeto).");
+            Debug.Log("Disparo al vacío.");
+            Debug.DrawRay(origin, direction * rayLength, clickRayColor, clickRayDuration);
         }
-
-        Debug.DrawRay(origin, direction * rayLength, clickRayColor, clickRayDuration);
     }
 }
