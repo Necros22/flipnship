@@ -7,9 +7,19 @@ public class MovementShip : MonoBehaviour
 
     public GameObject ship;
 
+    [Header("Movement Limits")]
+    [SerializeField] private bool useLimits = true;
+    [SerializeField] private float minX = -5f;
+    [SerializeField] private float maxX = 5f;
+    [SerializeField] private float minY = -3f;
+    [SerializeField] private float maxY = 3f;
+
     [Header("Rotation Settings")]
     [SerializeField] private float maxRotationAngle = 30f;
     [SerializeField] private float rotationSmooth = 5f;
+
+    [Header("Control")]
+    public bool movementEnabled = true; // <<--- DESACTIVAR MOVIMIENTO COMPLETO
 
     private float horizontalInput;
     private float verticalInput;
@@ -23,7 +33,9 @@ public class MovementShip : MonoBehaviour
 
     void Update()
     {
+        if (!movementEnabled) return;      // <<--- SI ESTA EN FALSE NO PUEDE MOVERSE
         if (Time.timeScale == 0f) return;
+
         HandleInput();
         MoveForward();
         Move();
@@ -35,31 +47,28 @@ public class MovementShip : MonoBehaviour
         float rawH = Input.GetAxisRaw("Horizontal");
         float rawV = Input.GetAxisRaw("Vertical");
 
-        // Re-map WASD based on camera rotation
         switch (cameraRotIndex)
         {
-            case 0: // normal
+            case 0:
                 horizontalInput = rawH;
                 verticalInput = rawV;
                 break;
 
-            case 1: // 90° giro
+            case 1:
                 horizontalInput = -rawV;
                 verticalInput = rawH;
                 break;
 
-            case 2: // 180°
+            case 2:
                 horizontalInput = -rawH;
                 verticalInput = -rawV;
                 break;
 
-            case 3: // 270°
+            case 3:
                 horizontalInput = rawV;
                 verticalInput = -rawH;
                 break;
         }
-
-
     }
 
     private void MoveForward()
@@ -71,6 +80,14 @@ public class MovementShip : MonoBehaviour
     {
         Vector3 movement = new Vector3(horizontalInput, verticalInput, 0) * speed * Time.deltaTime;
         transform.Translate(movement, Space.World);
+
+        if (useLimits)
+        {
+            Vector3 pos = transform.position;
+            pos.x = Mathf.Clamp(pos.x, minX, maxX);
+            pos.y = Mathf.Clamp(pos.y, minY, maxY);
+            transform.position = pos;
+        }
     }
 
     private void RotateShip()
