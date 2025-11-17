@@ -2,32 +2,44 @@
 
 public class CustomDirectionalGravity : MonoBehaviour
 {
-    public enum GravityDirection
-    {
-        Right,
-        Down,
-        Left,
-        Up
-    }
+    // ---------------------------------------
+    //                ENUMS
+    // ---------------------------------------
+    public enum GravityDirection { Right, Down, Left, Up }
+    public enum ObjectState { Default, ZeroGravity, MaxGravity }
 
-    public enum ObjectState
-    {
-        Default,
-        ZeroGravity,
-        MaxGravity
-    }
+    // ---------------------------------------
+    //          PERMISOS DE FUNCIONES
+    // ---------------------------------------
+    [Header("Permisos de efectos / funciones")]
+    public bool canUseCustomGravity = true;        // Controla GetGravityDirection
+    public bool canUseAntiGravity = true;          // Controla AntiGravityChange()
+    public bool canActivateZeroGravity = true;     // Controla ActivateZeroGravity()
+    public bool canActivateMaxGravity = true;      // Controla ActivateMaxGravity()
 
+    // ---------------------------------------
+    //         CONFIGURACIÓN DE GRAVEDAD
+    // ---------------------------------------
     [Header("Configuración de gravedad personalizada")]
     public GravityDirection gravityDirection = GravityDirection.Down;
     public float gravityStrength = 9.81f;
-    public float maxGravityMultiplier = 100f; // Fuerza extra en MaxGravity
+    public float maxGravityMultiplier = 100f;
 
+    // ---------------------------------------
+    //        ESTADO ACTUAL DEL OBJETO
+    // ---------------------------------------
     [Header("Estado del objeto")]
     public ObjectState currentState = ObjectState.Default;
 
+    // ---------------------------------------
+    //           VARIABLES PRIVADAS
+    // ---------------------------------------
     private Rigidbody rb;
     private Coroutine maxGravityCoroutine;
 
+    // ---------------------------------------
+    //               UNITY METHODS
+    // ---------------------------------------
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -47,7 +59,6 @@ public class CustomDirectionalGravity : MonoBehaviour
             case ObjectState.ZeroGravity:
                 rb.linearVelocity = Vector3.zero;
                 rb.angularVelocity = Vector3.zero;
-                // No aplicamos gravedad
                 break;
 
             case ObjectState.MaxGravity:
@@ -56,8 +67,14 @@ public class CustomDirectionalGravity : MonoBehaviour
         }
     }
 
+    // ---------------------------------------
+    //       OBTENER DIRECCIÓN DE GRAVEDAD
+    // ---------------------------------------
     private Vector3 GetGravityDirection()
     {
+        if (!canUseCustomGravity)
+            return Vector3.zero;
+
         return gravityDirection switch
         {
             GravityDirection.Up => Vector3.up,
@@ -68,24 +85,32 @@ public class CustomDirectionalGravity : MonoBehaviour
         };
     }
 
-    // ----------------------------
-    //        FUNCIONES DE ESTADO
-    // ----------------------------
-
-    /// <summary>
-    /// Activa ZeroGravity: detiene el objeto y elimina la gravedad.
-    /// </summary>
+    // ---------------------------------------
+    //           CAMBIO DE ESTADO: ZERO G
+    // ---------------------------------------
     public void ActivateZeroGravity()
     {
+        if (!canActivateZeroGravity)
+        {
+            Debug.Log("ActivateZeroGravity está bloqueado.");
+            return;
+        }
+
         currentState = ObjectState.ZeroGravity;
         Debug.Log("ZeroGravity Activada");
     }
 
-    /// <summary>
-    /// Activa MaxGravity por 4 segundos. Si ya está activa, se ignora.
-    /// </summary>
+    // ---------------------------------------
+    //           CAMBIO DE ESTADO: MAX G
+    // ---------------------------------------
     public void ActivateMaxGravity()
     {
+        if (!canActivateMaxGravity)
+        {
+            Debug.Log("ActivateMaxGravity está bloqueado.");
+            return;
+        }
+
         if (currentState == ObjectState.MaxGravity)
         {
             Debug.Log("MaxGravity ya está activa, ignorado.");
@@ -109,11 +134,17 @@ public class CustomDirectionalGravity : MonoBehaviour
         Debug.Log("MaxGravity finalizada, regresando a Default.");
     }
 
-    /// <summary>
-    /// Invierte la dirección de la gravedad.
-    /// </summary>
+    // ---------------------------------------
+    //              ANTI-GRAVEDAD
+    // ---------------------------------------
     public void AntiGravityChange()
     {
+        if (!canUseAntiGravity)
+        {
+            Debug.Log("AntiGravity está bloqueado. No se aplicará el cambio.");
+            return;
+        }
+
         switch (gravityDirection)
         {
             case GravityDirection.Up: gravityDirection = GravityDirection.Down; break;
