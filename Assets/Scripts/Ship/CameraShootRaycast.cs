@@ -72,7 +72,7 @@ public class CameraShootRaycast : MonoBehaviour
     {
         if (!shootingEnabled) return;
 
-        if (Input.GetKeyDown(KeyCode.Alpha1) && unlockAntiGravity) 
+        if (Input.GetKeyDown(KeyCode.Alpha1) && unlockAntiGravity)
         {
             print("AntiGravity");
             currentShotType = ShotType.AntiGravity;
@@ -107,7 +107,10 @@ public class CameraShootRaycast : MonoBehaviour
         Vector3 origin = pivotCamera.position;
         Vector3 direction = (targetPoint - origin).normalized;
 
-        if (Physics.Raycast(origin, direction, out RaycastHit hit, maxDynamicDistance, ignorePlayerMask))
+        // 🌟 NUEVA FUNCIÓN: Raycast que ignora botones
+        bool hitSomething = RaycastIgnoringButtons(origin, direction, out RaycastHit hit, maxDynamicDistance);
+
+        if (hitSomething)
         {
             currentRayDistance = hit.distance;
 
@@ -121,6 +124,29 @@ public class CameraShootRaycast : MonoBehaviour
             currentRayDistance = maxDynamicDistance;
             Debug.DrawRay(origin, direction * currentRayDistance, idleRayColor);
         }
+    }
+
+    // ------------------------------------
+    //      RAYCAST QUE IGNORA BOTONES
+    // ------------------------------------
+    bool RaycastIgnoringButtons(Vector3 origin, Vector3 direction, out RaycastHit validHit, float maxDist)
+    {
+        RaycastHit[] hits = Physics.RaycastAll(origin, direction, maxDist, ignorePlayerMask);
+
+        // Ordena por distancia
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+        foreach (RaycastHit h in hits)
+        {
+            if (h.collider.CompareTag("Button"))
+                continue; // ← LO IGNORA Y SIGUE BUSCANDO
+
+            validHit = h;
+            return true;
+        }
+
+        validHit = default;
+        return false;
     }
 
     // ------------------------------------
@@ -145,9 +171,12 @@ public class CameraShootRaycast : MonoBehaviour
         Vector3 origin = pivotCamera.position;
         Vector3 direction = (targetPoint - origin).normalized;
 
+        // 🌟 Usa el raycast que ignora botones
+        bool hitSomething = RaycastIgnoringButtons(origin, direction, out RaycastHit hit, maxDynamicDistance);
+
         float rayLength = maxDynamicDistance;
 
-        if (Physics.Raycast(origin, direction, out RaycastHit hit, maxDynamicDistance, ignorePlayerMask))
+        if (hitSomething)
         {
             rayLength = hit.distance;
 

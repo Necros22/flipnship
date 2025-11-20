@@ -17,8 +17,8 @@ public class CustomDirectionalGravity : MonoBehaviour
     public bool canActivateZeroGravity = true;
     public bool canActivateMaxGravity = true;
 
-    [Tooltip("Si está en false, este objeto NO permitirá que scripts externos o manualmente cambien su dirección de gravedad.")]
-    public bool acceptsManualGravityChange = true;   // ← Nuevo booleano
+    [Tooltip("Si está en false, este objeto NO permitirá que scripts externos o manualmente cambien su dirección de gravedad (ej: Q/E).")]
+    public bool acceptsManualGravityChange = true;   // controla SOLO cambios manuales globales (GravityControl)
 
     // ---------------------------------------
     //         CONFIGURACIÓN DE GRAVEDAD
@@ -46,7 +46,7 @@ public class CustomDirectionalGravity : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        rb.useGravity = false;
+        if (rb != null) rb.useGravity = false;
     }
 
     void FixedUpdate()
@@ -56,16 +56,19 @@ public class CustomDirectionalGravity : MonoBehaviour
         switch (currentState)
         {
             case ObjectState.Default:
-                rb.AddForce(direction * gravityStrength, ForceMode.Acceleration);
+                rb?.AddForce(direction * gravityStrength, ForceMode.Acceleration);
                 break;
 
             case ObjectState.ZeroGravity:
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
+                if (rb != null)
+                {
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                }
                 break;
 
             case ObjectState.MaxGravity:
-                rb.AddForce(direction * (gravityStrength * maxGravityMultiplier), ForceMode.Acceleration);
+                rb?.AddForce(direction * (gravityStrength * maxGravityMultiplier), ForceMode.Acceleration);
                 break;
         }
     }
@@ -89,8 +92,11 @@ public class CustomDirectionalGravity : MonoBehaviour
     }
 
     // ---------------------------------------
-    //              ANTI-GRAVEDAD
+    //              ANTI-GRAVEDAD (RAY)
     // ---------------------------------------
+    // Este método es llamado por el rayo — debe respetar solo canUseAntiGravity,
+    // no acceptsManualGravityChange (para que el rayo funcione aunque el objeto
+    // esté configurado para ignorar cambios manuales globales).
     public void AntiGravityChange()
     {
         if (!canUseAntiGravity)
@@ -99,11 +105,7 @@ public class CustomDirectionalGravity : MonoBehaviour
             return;
         }
 
-        if (!acceptsManualGravityChange)
-        {
-            Debug.Log("Este objeto NO acepta cambios manuales de gravedad.");
-            return;
-        }
+        // NO verificamos acceptsManualGravityChange aquí (esto permitir que el rayo funcione)
 
         switch (gravityDirection)
         {
@@ -113,22 +115,33 @@ public class CustomDirectionalGravity : MonoBehaviour
             case GravityDirection.Right: gravityDirection = GravityDirection.Left; break;
         }
 
-        Debug.Log($"Gravedad invertida: ahora apunta hacia {gravityDirection}");
+        Debug.Log($"Gravedad invertida por rayo: ahora apunta hacia {gravityDirection}");
     }
 
     // ---------------------------------------
-    //              MÉTODO SEGURO PARA CAMBIAR GRAVEDAD DESDE OTROS SCRIPTS
+    //    MÉTODO PARA CAMBIAR GRAVEDAD (USADO POR RAYOS)
     // ---------------------------------------
+    // Este método lo pueden usar los rayos u otros scripts; NO bloquea por acceptsManualGravityChange.
     public void SetGravityDirection(GravityDirection newDirection)
+    {
+        gravityDirection = newDirection;
+        Debug.Log($"Dirección de gravedad cambiada manualmente (por función pública) a {newDirection}");
+    }
+
+    // ---------------------------------------
+    //    MÉTODO PARA CAMBIAR GRAVEDAD (MANUAL GLOBAL)
+    // ---------------------------------------
+    // Este método SÍ respeta acceptsManualGravityChange y es el que debe llamar GravityControl
+    public void SetGravityDirectionManual(GravityDirection newDirection)
     {
         if (!acceptsManualGravityChange)
         {
-            Debug.Log("Este objeto NO acepta cambios manuales de gravedad.");
+            Debug.Log("Este objeto NO acepta cambios manuales de gravedad (SetGravityDirectionManual).");
             return;
         }
 
         gravityDirection = newDirection;
-        Debug.Log($"Dirección de gravedad cambiada manualmente a {newDirection}");
+        Debug.Log($"Dirección de gravedad cambiada manualmente (global) a {newDirection}");
     }
 
     // ---------------------------------------

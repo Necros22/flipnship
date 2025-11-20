@@ -8,6 +8,7 @@ TagManager:
   - Gwall
   - GravityAffected
   - Damage
+  - Button
   layers:
   - Default
   - TransparentFX

@@ -24,6 +24,25 @@ public class ButtonBehaviour : MonoBehaviour
 
 
     // ------------------------------------------------------------
+    //              EXTRA FUNCTIONS  (NEW FEATURE)
+    // ------------------------------------------------------------
+    [Header("Funciones Extra (Opcional)")]
+    [Tooltip("Si está activado, al presionar este botón también se llamarán funciones extra.")]
+    public bool callExtraFunctions = false;
+
+    [System.Serializable]
+    public class ExtraFunctionCall
+    {
+        public GameObject extraTargetObject;
+        public string extraTargetScriptName;
+        public string extraTargetFunctionName;
+    }
+
+    [Tooltip("Lista de funciones extra a ejecutar")]
+    public ExtraFunctionCall[] extraFunctions;
+
+
+    // ------------------------------------------------------------
     //                    BASIC BUTTON SETTINGS
     // ------------------------------------------------------------
     [Header("Configuración del Botón")]
@@ -34,7 +53,7 @@ public class ButtonBehaviour : MonoBehaviour
     public bool staysOnOnceActivated = false;
 
     private int activatorCount = 0;
-    private bool isActive = false;
+    public bool isActive = false;
 
 
     // ------------------------------------------------------------
@@ -102,6 +121,7 @@ public class ButtonBehaviour : MonoBehaviour
         if (!isMultiButton)
         {
             CallTargetFunction();
+            CallExtraFunctionsIfEnabled();
             return;
         }
 
@@ -110,6 +130,13 @@ public class ButtonBehaviour : MonoBehaviour
         {
             CheckAllButtons();
             return;
+        }
+
+        // BOTÓN ESCLAVO
+        if (isMultiButton && !isMainButton)
+        {
+            // Aún así puede llamar funciones extra
+            CallExtraFunctionsIfEnabled();
         }
     }
 
@@ -167,7 +194,9 @@ public class ButtonBehaviour : MonoBehaviour
                 return;
         }
 
+        // Si pasa, ejecuta función principal y extras
         CallTargetFunction();
+        CallExtraFunctionsIfEnabled();
     }
 
 
@@ -176,56 +205,71 @@ public class ButtonBehaviour : MonoBehaviour
     // ------------------------------------------------------------
     private void CallTargetFunction()
     {
-        if (targetObject == null ||
-            string.IsNullOrWhiteSpace(targetScriptName) ||
-            string.IsNullOrWhiteSpace(targetFunctionName))
+        InvokeFunction(targetObject, targetScriptName, targetFunctionName);
+    }
+
+    private void InvokeFunction(GameObject obj, string scriptName, string functionName)
+    {
+        if (obj == null || string.IsNullOrWhiteSpace(scriptName) || string.IsNullOrWhiteSpace(functionName))
         {
-            Debug.LogWarning("ButtonBehaviour: Falta configurar la función objetivo.");
+            Debug.LogWarning("ButtonBehaviour: Falta configurar una función.");
             return;
         }
 
-        Component script = targetObject.GetComponent(targetScriptName);
+        Component script = obj.GetComponent(scriptName);
         if (script == null)
         {
-            Debug.LogWarning("Script no encontrado: " + targetScriptName);
+            Debug.LogWarning("Script no encontrado: " + scriptName);
             return;
         }
 
-        MethodInfo method = script.GetType().GetMethod(targetFunctionName);
+        MethodInfo method = script.GetType().GetMethod(functionName);
         if (method == null)
         {
-            Debug.LogWarning("Método no encontrado: " + targetFunctionName);
+            Debug.LogWarning("Método no encontrado: " + functionName);
             return;
         }
 
         method.Invoke(script, null);
     }
 
+
+    // ------------------------------------------------------------
+    //              EXTRA FUNCTION CALL SYSTEM (NEW)
+    // ------------------------------------------------------------
+    private void CallExtraFunctionsIfEnabled()
+    {
+        if (!callExtraFunctions) return;
+        if (extraFunctions == null) return;
+
+        foreach (var extra in extraFunctions)
+        {
+            InvokeFunction(extra.extraTargetObject, extra.extraTargetScriptName, extra.extraTargetFunctionName);
+        }
+    }
+
+
     // ------------------------------------------------------------
     //                     EXTERNAL RESET FUNCTION
     // ------------------------------------------------------------
     public void ForceResetButton()
     {
-        // Solo funciona si el botón usa "permanecer encendido"
         if (!staysOnOnceActivated)
         {
-            Debug.Log("ForceResetButton: Este botón no está configurado para permanecer encendido. No se reinicia.");
+            Debug.Log("ForceResetButton: Este botón no está configurado para permanecer encendido.");
             return;
         }
 
-        // Solo funciona si el botón está actualmente activo
         if (!isActive)
         {
-            Debug.Log("ForceResetButton: El botón ya está apagado. Nada que reiniciar.");
+            Debug.Log("ForceResetButton: El botón ya está apagado.");
             return;
         }
 
-        // Resetear el botón
         activatorCount = 0;
         isActive = false;
         UpdateLightColor();
 
         Debug.Log("ForceResetButton: Botón reiniciado manualmente.");
     }
-
 }

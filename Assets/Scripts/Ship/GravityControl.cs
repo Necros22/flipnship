@@ -56,16 +56,20 @@ public class GravityControl : MonoBehaviour
 
             if (gravity != null)
             {
+                // AHORA usamos la versión que respeta acceptsManualGravityChange
                 int currentIndex = (int)gravity.gravityDirection;
                 int total = System.Enum.GetValues(typeof(CustomDirectionalGravity.GravityDirection)).Length;
 
                 int newIndex = (currentIndex + direction) % total;
                 if (newIndex < 0) newIndex += total;
 
-                gravity.gravityDirection = (CustomDirectionalGravity.GravityDirection)newIndex;
+                gravity.SetGravityDirectionManual(
+                    (CustomDirectionalGravity.GravityDirection)newIndex
+                );
             }
         }
     }
+
 
     IEnumerator SmoothRotate(float angle)
     {

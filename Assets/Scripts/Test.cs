@@ -1,24 +1,38 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class Test : MonoBehaviour
 {
+    private int test4Counter = 0;    // â† contador interno
+    private bool test4Blocked = false; // â† bloqueo permanente
+
     public void test1()
     {
-        print("Botón 1 Funcional");
+        print("BotÃ³n 1 Funcional");
     }
 
     public void test2()
     {
-        print("Botón multiple Funcional");
+        print("BotÃ³n multiple Funcional");
     }
 
     public void test3()
     {
-        print("Botón multiple 2 Funcional");
+        print("BotÃ³n multiple 2 Funcional");
     }
 
     public void test4()
     {
-        print("Botón de reinicio Funcional");
+        if (test4Blocked)
+            return; // Ya no hace nada
+
+        test4Counter++;
+        print("BotÃ³n de reinicio Funcional");
+        print("Contador: " + test4Counter);
+
+        if (test4Counter >= 6)
+        {
+            test4Blocked = true;
+            print("Los botones se han presionado 6 veces");
+        }
     }
 }
