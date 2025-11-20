@@ -12,10 +12,13 @@ public class CustomDirectionalGravity : MonoBehaviour
     //          PERMISOS DE FUNCIONES
     // ---------------------------------------
     [Header("Permisos de efectos / funciones")]
-    public bool canUseCustomGravity = true;        // Controla GetGravityDirection
-    public bool canUseAntiGravity = true;          // Controla AntiGravityChange()
-    public bool canActivateZeroGravity = true;     // Controla ActivateZeroGravity()
-    public bool canActivateMaxGravity = true;      // Controla ActivateMaxGravity()
+    public bool canUseCustomGravity = true;
+    public bool canUseAntiGravity = true;
+    public bool canActivateZeroGravity = true;
+    public bool canActivateMaxGravity = true;
+
+    [Tooltip("Si está en false, este objeto NO permitirá que scripts externos o manualmente cambien su dirección de gravedad.")]
+    public bool acceptsManualGravityChange = true;   // ← Nuevo booleano
 
     // ---------------------------------------
     //         CONFIGURACIÓN DE GRAVEDAD
@@ -86,6 +89,49 @@ public class CustomDirectionalGravity : MonoBehaviour
     }
 
     // ---------------------------------------
+    //              ANTI-GRAVEDAD
+    // ---------------------------------------
+    public void AntiGravityChange()
+    {
+        if (!canUseAntiGravity)
+        {
+            Debug.Log("AntiGravity está bloqueado. No se aplicará el cambio.");
+            return;
+        }
+
+        if (!acceptsManualGravityChange)
+        {
+            Debug.Log("Este objeto NO acepta cambios manuales de gravedad.");
+            return;
+        }
+
+        switch (gravityDirection)
+        {
+            case GravityDirection.Up: gravityDirection = GravityDirection.Down; break;
+            case GravityDirection.Down: gravityDirection = GravityDirection.Up; break;
+            case GravityDirection.Left: gravityDirection = GravityDirection.Right; break;
+            case GravityDirection.Right: gravityDirection = GravityDirection.Left; break;
+        }
+
+        Debug.Log($"Gravedad invertida: ahora apunta hacia {gravityDirection}");
+    }
+
+    // ---------------------------------------
+    //              MÉTODO SEGURO PARA CAMBIAR GRAVEDAD DESDE OTROS SCRIPTS
+    // ---------------------------------------
+    public void SetGravityDirection(GravityDirection newDirection)
+    {
+        if (!acceptsManualGravityChange)
+        {
+            Debug.Log("Este objeto NO acepta cambios manuales de gravedad.");
+            return;
+        }
+
+        gravityDirection = newDirection;
+        Debug.Log($"Dirección de gravedad cambiada manualmente a {newDirection}");
+    }
+
+    // ---------------------------------------
     //           CAMBIO DE ESTADO: ZERO G
     // ---------------------------------------
     public void ActivateZeroGravity()
@@ -132,27 +178,5 @@ public class CustomDirectionalGravity : MonoBehaviour
 
         currentState = ObjectState.Default;
         Debug.Log("MaxGravity finalizada, regresando a Default.");
-    }
-
-    // ---------------------------------------
-    //              ANTI-GRAVEDAD
-    // ---------------------------------------
-    public void AntiGravityChange()
-    {
-        if (!canUseAntiGravity)
-        {
-            Debug.Log("AntiGravity está bloqueado. No se aplicará el cambio.");
-            return;
-        }
-
-        switch (gravityDirection)
-        {
-            case GravityDirection.Up: gravityDirection = GravityDirection.Down; break;
-            case GravityDirection.Down: gravityDirection = GravityDirection.Up; break;
-            case GravityDirection.Left: gravityDirection = GravityDirection.Right; break;
-            case GravityDirection.Right: gravityDirection = GravityDirection.Left; break;
-        }
-
-        Debug.Log($"Gravedad invertida: ahora apunta hacia {gravityDirection}");
     }
 }
