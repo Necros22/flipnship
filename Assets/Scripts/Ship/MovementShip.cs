@@ -1,10 +1,20 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class MovementShip : MonoBehaviour
 {
+    // -----------------------------------------------------
+    //                 MOVEMENT SETTINGS
+    // -----------------------------------------------------
     [Header("Movement Settings")]
-    [SerializeField] private float speed = 5f;
+    [SerializeField] private float forwardSpeed = 5f;        // velocidad normal
+    [SerializeField] private float boostedForwardSpeed = 12f; // velocidad aumentada al presionar espacio
 
+    [SerializeField] private float lateralSpeed = 5f;
+
+    [Header("Optional Camera Forward Movement")]
+    public Transform cameraToMoveForward;
+
+    [Header("Ship Model (for tilting)")]
     public GameObject ship;
 
     [Header("Movement Limits")]
@@ -19,13 +29,16 @@ public class MovementShip : MonoBehaviour
     [SerializeField] private float rotationSmooth = 5f;
 
     [Header("Control")]
-    public bool movementEnabled = true; // <<--- DESACTIVAR MOVIMIENTO COMPLETO
+    public bool movementEnabled = true;
 
     private float horizontalInput;
     private float verticalInput;
+    private int cameraRotIndex = 0;
 
-    private int cameraRotIndex = 0; // 0=normal,1=90�,2=180�,3=270�
 
+    // ---------------------------------------------
+    //         ROTACIÓN DE INPUT SEGÚN CÁMARA
+    // ---------------------------------------------
     public void SetRotationIndex(int index)
     {
         cameraRotIndex = index;
@@ -33,15 +46,18 @@ public class MovementShip : MonoBehaviour
 
     void Update()
     {
-        if (!movementEnabled) return;      // <<--- SI ESTA EN FALSE NO PUEDE MOVERSE
+        if (!movementEnabled) return;
         if (Time.timeScale == 0f) return;
 
         HandleInput();
         MoveForward();
-        Move();
+        MoveLaterally();
         RotateShip();
     }
 
+    // ---------------------------------------------
+    //                INPUT
+    // ---------------------------------------------
     void HandleInput()
     {
         float rawH = Input.GetAxisRaw("Horizontal");
@@ -71,15 +87,32 @@ public class MovementShip : MonoBehaviour
         }
     }
 
+    // ---------------------------------------------
+    //       MOVIMIENTO HACIA ADELANTE (Z)
+    // ---------------------------------------------
     private void MoveForward()
     {
-        transform.position += new Vector3(0, 0, speed * Time.deltaTime);
+        float currentSpeed = Input.GetKey(KeyCode.Space) ? boostedForwardSpeed : forwardSpeed;
+
+        // mover nave
+        transform.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
+
+        // mover cámara opcionalmente
+        if (cameraToMoveForward != null)
+        {
+            cameraToMoveForward.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
+        }
     }
 
-    private void Move()
+    // ---------------------------------------------
+    //  MOVIMIENTO LATERAL (IZQ-DER / ARRIBA-ABAJO)
+    // ---------------------------------------------
+    private void MoveLaterally()
     {
-        Vector3 movement = new Vector3(horizontalInput, verticalInput, 0) * speed * Time.deltaTime;
-        transform.Translate(movement, Space.World);
+        Vector3 move = new Vector3(horizontalInput, verticalInput, 0)
+                       * lateralSpeed * Time.deltaTime;
+
+        transform.Translate(move, Space.World);
 
         if (useLimits)
         {
@@ -90,8 +123,13 @@ public class MovementShip : MonoBehaviour
         }
     }
 
+    // ---------------------------------------------
+    //            ROTACIÓN VISUAL DE LA NAVE
+    // ---------------------------------------------
     private void RotateShip()
     {
+        if (ship == null) return;
+
         float targetY = horizontalInput * maxRotationAngle;
         float targetX = -verticalInput * maxRotationAngle;
 

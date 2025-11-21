@@ -44,7 +44,6 @@ GameObject:
   - component: {fileID: 2155109394169606166}
   - component: {fileID: 5567354909141194186}
   - component: {fileID: 3400678972348248305}
-  - component: {fileID: 3016485835961464854}
   m_Layer: 0
   m_Name: Camera
   m_TagString: MainCamera
@@ -189,16 +188,8 @@ MonoBehaviour:
   clickRayDuration: 30
   idleRayColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   clickRayColor: {r: 0, g: 1, b: 1, a: 1}
---- !u!114 &3016485835961464854
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8554208059317388952}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 953e57795fec32543a990b2a6665a3cb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  speed: 5
+  shootingEnabled: 1
+  unlockAntiGravity: 1
+  unlockZeroGravity: 1
+  unlockMaxGravity: 1
+  currentShotType: 1

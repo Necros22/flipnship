@@ -17,8 +17,8 @@ public class CustomDirectionalGravity : MonoBehaviour
     public bool canActivateZeroGravity = true;
     public bool canActivateMaxGravity = true;
 
-    [Tooltip("Si está en false, este objeto NO permitirá que scripts externos o manualmente cambien su dirección de gravedad (ej: Q/E).")]
-    public bool acceptsManualGravityChange = true;   // controla SOLO cambios manuales globales (GravityControl)
+    [Tooltip("Si está en false, este objeto NO permitirá cambios manuales globales de gravedad.")]
+    public bool acceptsManualGravityChange = true;
 
     // ---------------------------------------
     //         CONFIGURACIÓN DE GRAVEDAD
@@ -92,21 +92,21 @@ public class CustomDirectionalGravity : MonoBehaviour
     }
 
     // ---------------------------------------
-    //              ANTI-GRAVEDAD (RAY)
+    //         ANTI GRAVEDAD DESDE RAYOS
     // ---------------------------------------
-    // Este método es llamado por el rayo — debe respetar solo canUseAntiGravity,
-    // no acceptsManualGravityChange (para que el rayo funcione aunque el objeto
-    // esté configurado para ignorar cambios manuales globales).
     public void AntiGravityChange()
     {
         if (!canUseAntiGravity)
-        {
-            Debug.Log("AntiGravity está bloqueado. No se aplicará el cambio.");
             return;
+
+        // NUEVO: si está en ZeroGravity, se apaga
+        if (currentState == ObjectState.ZeroGravity)
+        {
+            Debug.Log("ZeroGravity cancelada por AntiGravity.");
+            currentState = ObjectState.Default;
         }
 
-        // NO verificamos acceptsManualGravityChange aquí (esto permitir que el rayo funcione)
-
+        // Ahora sí aplicar AntiGravity normal
         switch (gravityDirection)
         {
             case GravityDirection.Up: gravityDirection = GravityDirection.Down; break;
@@ -119,62 +119,70 @@ public class CustomDirectionalGravity : MonoBehaviour
     }
 
     // ---------------------------------------
-    //    MÉTODO PARA CAMBIAR GRAVEDAD (USADO POR RAYOS)
+    //     CAMBIO DE DIRECCIÓN LIBRE (RAYOS)
     // ---------------------------------------
-    // Este método lo pueden usar los rayos u otros scripts; NO bloquea por acceptsManualGravityChange.
     public void SetGravityDirection(GravityDirection newDirection)
     {
         gravityDirection = newDirection;
-        Debug.Log($"Dirección de gravedad cambiada manualmente (por función pública) a {newDirection}");
+        Debug.Log($"Dirección de gravedad cambiada a {newDirection}");
     }
 
     // ---------------------------------------
-    //    MÉTODO PARA CAMBIAR GRAVEDAD (MANUAL GLOBAL)
+    //     CAMBIO DE DIRECCIÓN MANUAL GLOBAL
     // ---------------------------------------
-    // Este método SÍ respeta acceptsManualGravityChange y es el que debe llamar GravityControl
     public void SetGravityDirectionManual(GravityDirection newDirection)
     {
         if (!acceptsManualGravityChange)
         {
-            Debug.Log("Este objeto NO acepta cambios manuales de gravedad (SetGravityDirectionManual).");
+            Debug.Log("Este objeto NO acepta cambios manuales de gravedad.");
             return;
         }
 
         gravityDirection = newDirection;
-        Debug.Log($"Dirección de gravedad cambiada manualmente (global) a {newDirection}");
+        Debug.Log($"Dirección de gravedad cambiada manualmente a {newDirection}");
     }
 
     // ---------------------------------------
-    //           CAMBIO DE ESTADO: ZERO G
+    //           ACTIVAR ZERO GRAVITY
     // ---------------------------------------
     public void ActivateZeroGravity()
     {
         if (!canActivateZeroGravity)
-        {
-            Debug.Log("ActivateZeroGravity está bloqueado.");
             return;
-        }
 
         currentState = ObjectState.ZeroGravity;
-        Debug.Log("ZeroGravity Activada");
+        Debug.Log("ZeroGravity activada");
     }
 
     // ---------------------------------------
-    //           CAMBIO DE ESTADO: MAX G
+    //           DESACTIVAR ZERO GRAVITY
+    // ---------------------------------------
+    public void DisableZeroGravity()
+    {
+        if (currentState == ObjectState.ZeroGravity)
+        {
+            currentState = ObjectState.Default;
+            Debug.Log("ZeroGravity desactivada manualmente.");
+        }
+    }
+
+    // ---------------------------------------
+    //           ACTIVAR MAX GRAVITY
     // ---------------------------------------
     public void ActivateMaxGravity()
     {
         if (!canActivateMaxGravity)
-        {
-            Debug.Log("ActivateMaxGravity está bloqueado.");
             return;
+
+        // NUEVO: si está en ZeroGravity, se apaga
+        if (currentState == ObjectState.ZeroGravity)
+        {
+            Debug.Log("ZeroGravity cancelada por MaxGravity.");
+            currentState = ObjectState.Default;
         }
 
         if (currentState == ObjectState.MaxGravity)
-        {
-            Debug.Log("MaxGravity ya está activa, ignorado.");
             return;
-        }
 
         if (maxGravityCoroutine != null)
             StopCoroutine(maxGravityCoroutine);
