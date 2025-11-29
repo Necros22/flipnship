@@ -25,11 +25,8 @@ public class CameraShootRaycast : MonoBehaviour
     private float currentRayDistance;
     private int ignorePlayerMask;
 
-    // ------------------------------------
-    //      CONTROL DE DISPAROS NUEVO
-    // ------------------------------------
     [Header("Control General de Disparos")]
-    public bool shootingEnabled = true;   // ← Activar/desactivar todo el sistema
+    public bool shootingEnabled = true;
 
     [Header("Desbloqueo de Tipos de Disparo")]
     public bool unlockAntiGravity = true;
@@ -37,7 +34,13 @@ public class CameraShootRaycast : MonoBehaviour
     public bool unlockMaxGravity = true;
 
     [Header("Tipo de Disparo Actual")]
-    public ShotType currentShotType = ShotType.AntiGravity; // ← Por defecto el 1
+    public ShotType currentShotType = ShotType.AntiGravity;
+
+    // Último afectado por ZeroGravity (bloque o sierra)
+    private CustomDirectionalGravity lastZeroGravityTarget;
+    private SawController lastSawParalyzed;
+
+
 
     void Start()
     {
@@ -49,9 +52,9 @@ public class CameraShootRaycast : MonoBehaviour
         if (pivotCamera == null)
             Debug.LogError("No se asignó el PivotCamera.");
 
-        // Ignorar layer Player
         ignorePlayerMask = ~LayerMask.GetMask("Player");
     }
+
 
     void Update()
     {
@@ -65,35 +68,28 @@ public class CameraShootRaycast : MonoBehaviour
             FireRay();
     }
 
-    // ------------------------------------
-    //        SELECCIÓN DE DISPARO
-    // ------------------------------------
+
     void HandleShotSelection()
     {
         if (!shootingEnabled) return;
 
         if (Input.GetKeyDown(KeyCode.Alpha1) && unlockAntiGravity)
         {
-            print("AntiGravity");
             currentShotType = ShotType.AntiGravity;
         }
 
         if (Input.GetKeyDown(KeyCode.Alpha2) && unlockZeroGravity)
         {
-            print("ZeroGravity");
             currentShotType = ShotType.ZeroGravity;
         }
 
         if (Input.GetKeyDown(KeyCode.Alpha3) && unlockMaxGravity)
         {
-            print("MaxGravity");
             currentShotType = ShotType.MaxGravity;
         }
     }
 
-    // ------------------------------------
-    //              RAY VISUAL
-    // ------------------------------------
+
     void UpdateAimRay()
     {
         Ray cameraRay = cam.ScreenPointToRay(Input.mousePosition);
@@ -107,7 +103,6 @@ public class CameraShootRaycast : MonoBehaviour
         Vector3 origin = pivotCamera.position;
         Vector3 direction = (targetPoint - origin).normalized;
 
-        // 🌟 NUEVA FUNCIÓN: Raycast que ignora botones
         bool hitSomething = RaycastIgnoringButtons(origin, direction, out RaycastHit hit, maxDynamicDistance);
 
         if (hitSomething)
@@ -126,20 +121,18 @@ public class CameraShootRaycast : MonoBehaviour
         }
     }
 
-    // ------------------------------------
-    //      RAYCAST QUE IGNORA BOTONES
-    // ------------------------------------
+
+
     bool RaycastIgnoringButtons(Vector3 origin, Vector3 direction, out RaycastHit validHit, float maxDist)
     {
         RaycastHit[] hits = Physics.RaycastAll(origin, direction, maxDist, ignorePlayerMask);
 
-        // Ordena por distancia
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
         foreach (RaycastHit h in hits)
         {
             if (h.collider.CompareTag("Button"))
-                continue; // ← LO IGNORA Y SIGUE BUSCANDO
+                continue;
 
             validHit = h;
             return true;
@@ -149,9 +142,7 @@ public class CameraShootRaycast : MonoBehaviour
         return false;
     }
 
-    // ------------------------------------
-    //              DISPARO
-    // ------------------------------------
+
     void FireRay()
     {
         if (!shootingEnabled)
@@ -161,8 +152,8 @@ public class CameraShootRaycast : MonoBehaviour
         }
 
         Ray cameraRay = cam.ScreenPointToRay(Input.mousePosition);
-        Vector3 targetPoint;
 
+        Vector3 targetPoint;
         if (Physics.Raycast(cameraRay, out RaycastHit cameraHit, maxRayDistance, ignorePlayerMask))
             targetPoint = cameraHit.point;
         else
@@ -171,56 +162,106 @@ public class CameraShootRaycast : MonoBehaviour
         Vector3 origin = pivotCamera.position;
         Vector3 direction = (targetPoint - origin).normalized;
 
-        // 🌟 Usa el raycast que ignora botones
         bool hitSomething = RaycastIgnoringButtons(origin, direction, out RaycastHit hit, maxDynamicDistance);
 
         float rayLength = maxDynamicDistance;
 
-        if (hitSomething)
-        {
-            rayLength = hit.distance;
-
-            Debug.DrawRay(origin, direction * rayLength, clickRayColor, clickRayDuration);
-
-            if (!hit.collider.CompareTag("GravityAffected"))
-            {
-                Debug.Log($"Impacto sin efecto en {hit.collider.name}");
-                return;
-            }
-
-            CustomDirectionalGravity gravityScript = hit.collider.GetComponent<CustomDirectionalGravity>();
-
-            if (gravityScript == null)
-            {
-                Debug.LogWarning($"{hit.collider.name} no tiene CustomDirectionalGravity.");
-                return;
-            }
-
-            // --------------------------------
-            //       APLICAR EFECTO SEGÚN TIPO
-            // --------------------------------
-            switch (currentShotType)
-            {
-                case ShotType.AntiGravity:
-                    gravityScript.AntiGravityChange();
-                    Debug.Log("Disparo AntiGravity → AntiGravityChange()");
-                    break;
-
-                case ShotType.ZeroGravity:
-                    gravityScript.ActivateZeroGravity();
-                    Debug.Log("Disparo ZeroGravity → ActivateZeroGravity()");
-                    break;
-
-                case ShotType.MaxGravity:
-                    gravityScript.ActivateMaxGravity();
-                    Debug.Log("Disparo MaxGravity → ActivateMaxGravity()");
-                    break;
-            }
-        }
-        else
+        if (!hitSomething)
         {
             Debug.Log("Disparo al vacío.");
             Debug.DrawRay(origin, direction * rayLength, clickRayColor, clickRayDuration);
+            return;
+        }
+
+        rayLength = hit.distance;
+        Debug.DrawRay(origin, direction * rayLength, clickRayColor, clickRayDuration);
+
+
+        // =====================================================
+        //    1) ¿ES UNA SIERRA?
+        // =====================================================
+
+        SawController saw = hit.collider.GetComponentInParent<SawController>();
+
+        if (saw != null)
+        {
+            if (currentShotType == ShotType.ZeroGravity)
+            {
+                // Si había un bloque paralizado → lo desparalizamos
+                if (lastZeroGravityTarget != null)
+                {
+                    lastZeroGravityTarget.DisableZeroGravity();
+                    lastZeroGravityTarget = null;
+                }
+
+                // Si había una sierra paralizada → la desparalizamos
+                if (lastSawParalyzed != null && lastSawParalyzed != saw)
+                {
+                    lastSawParalyzed.UnParalyze();
+                }
+
+                // Paralizamos esta sierra
+                saw.Paralyze();
+                lastSawParalyzed = saw;
+            }
+            else
+            {
+                saw.UnParalyze();
+            }
+
+            return;
+        }
+
+
+
+        // =====================================================
+        //    2) ¿ES UN OBJETO AFECTADO POR GRAVEDAD?
+        // =====================================================
+        if (!hit.collider.CompareTag("GravityAffected"))
+        {
+            Debug.Log($"Impacto sin efecto en {hit.collider.name}");
+            return;
+        }
+
+        CustomDirectionalGravity gravityScript = hit.collider.GetComponent<CustomDirectionalGravity>();
+
+        if (gravityScript == null)
+        {
+            Debug.LogWarning($"{hit.collider.name} no tiene CustomDirectionalGravity.");
+            return;
+        }
+
+
+        // =====================================================
+        //    3) APLICAR EFECTO
+        // =====================================================
+
+        switch (currentShotType)
+        {
+            case ShotType.AntiGravity:
+                gravityScript.AntiGravityChange();
+                break;
+
+            case ShotType.ZeroGravity:
+
+                // Si había una sierra paralizada → desparalizar
+                if (lastSawParalyzed != null)
+                {
+                    lastSawParalyzed.UnParalyze();
+                    lastSawParalyzed = null;
+                }
+
+                // Si había un bloque paralizado → desparalizar
+                if (lastZeroGravityTarget != null && lastZeroGravityTarget != gravityScript)
+                    lastZeroGravityTarget.DisableZeroGravity();
+
+                gravityScript.ActivateZeroGravity();
+                lastZeroGravityTarget = gravityScript;
+                break;
+
+            case ShotType.MaxGravity:
+                gravityScript.ActivateMaxGravity();
+                break;
         }
     }
 }

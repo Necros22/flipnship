@@ -9,6 +9,7 @@ TagManager:
   - GravityAffected
   - Damage
   - Button
+  - Saw
   layers:
   - Default
   - TransparentFX
