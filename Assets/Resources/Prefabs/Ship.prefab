@@ -271,7 +271,7 @@ GameObject:
   - component: {fileID: 983206613956695042}
   - component: {fileID: 7389981963666064708}
   - component: {fileID: 1564265052163563638}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Ship
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -364,6 +364,8 @@ MonoBehaviour:
   gravityAnchor: {fileID: 0}
   cameraHolder: {fileID: 0}
   shipMovement: {fileID: 1564265052163563638}
+  allowRotateQ: 1
+  allowRotateE: 1
   currentCameraRotation: 0
 --- !u!114 &1564265052163563638
 MonoBehaviour:
@@ -377,10 +379,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb1140ffd6cc6c047b6068c2f4666430, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 20
+  forwardSpeed: 5
+  boostedForwardSpeed: 12
+  lateralSpeed: 5
+  cameraToMoveForward: {fileID: 0}
   ship: {fileID: 4473729699687086905}
+  useLimits: 1
+  minX: -5
+  maxX: 5
+  minY: -3
+  maxY: 3
   maxRotationAngle: 30
   rotationSmooth: 5
+  movementEnabled: 1
 --- !u!1 &5559702053952544276
 GameObject:
   m_ObjectHideFlags: 0

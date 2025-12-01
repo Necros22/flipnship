@@ -1861,6 +1861,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Ship
       objectReference: {fileID: 0}
+    - target: {fileID: 4473729699687086905, guid: 0f733ba9e53a1584fbbcca3965792c99, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 7389981963666064708, guid: 0f733ba9e53a1584fbbcca3965792c99, type: 3}
       propertyPath: allowRotateE
       value: 1
