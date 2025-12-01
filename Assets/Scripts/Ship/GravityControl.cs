@@ -10,26 +10,31 @@ public class GravityControl : MonoBehaviour
     public Transform cameraHolder;
 
     [Header("Referencia a la nave (MovementShip)")]
-    public MovementShip shipMovement; // drag your ship here just for passing rotationIndex
+    public MovementShip shipMovement;
+
+    [Header("Permisos de cambio de gravedad")]
+    public bool allowRotateQ = true;   // habilita/deshabilita la rotación con Q
+    public bool allowRotateE = true;   // habilita/deshabilita la rotación con E
 
     private float rotationStep = 90f;
     private bool isRotating = false;
 
-    // cuántas rotaciones lleva la cámara (0,1,2,3)
     [HideInInspector] public int currentCameraRotation = 0;
 
     void Update()
     {
         if (gravityAnchor == null || cameraHolder == null) return;
 
-        if (Input.GetKeyDown(KeyCode.Q) && !isRotating)
+        // ------------ ROTACIÓN CON Q ------------
+        if (Input.GetKeyDown(KeyCode.Q) && !isRotating && allowRotateQ)
         {
             RotateGravity(-1);
             RotateCamera(+rotationStep);
             UpdateRotationIndex(+1);
         }
 
-        if (Input.GetKeyDown(KeyCode.E) && !isRotating)
+        // ------------ ROTACIÓN CON E ------------
+        if (Input.GetKeyDown(KeyCode.E) && !isRotating && allowRotateE)
         {
             RotateGravity(1);
             RotateCamera(-rotationStep);
@@ -42,7 +47,6 @@ public class GravityControl : MonoBehaviour
         currentCameraRotation = (currentCameraRotation + dir) % 4;
         if (currentCameraRotation < 0) currentCameraRotation += 4;
 
-        // pasamos la info a la nave
         if (shipMovement != null)
             shipMovement.SetRotationIndex(currentCameraRotation);
     }
@@ -56,7 +60,6 @@ public class GravityControl : MonoBehaviour
 
             if (gravity != null)
             {
-                // AHORA usamos la versión que respeta acceptsManualGravityChange
                 int currentIndex = (int)gravity.gravityDirection;
                 int total = System.Enum.GetValues(typeof(CustomDirectionalGravity.GravityDirection)).Length;
 
@@ -70,12 +73,11 @@ public class GravityControl : MonoBehaviour
         }
     }
 
-
     IEnumerator SmoothRotate(float angle)
     {
         isRotating = true;
 
-        // ✅ Freeze everything
+        // Pausa global (puede desactivarse si quieres luego)
         Time.timeScale = 0f;
 
         float duration = 0.35f;
@@ -87,13 +89,12 @@ public class GravityControl : MonoBehaviour
         while (t < duration)
         {
             cameraHolder.rotation = Quaternion.Lerp(startRot, endRot, t / duration);
-            t += Time.unscaledDeltaTime; // ✅ ignore timeScale
+            t += Time.unscaledDeltaTime;
             yield return null;
         }
 
         cameraHolder.rotation = endRot;
 
-        // ✅ Resume game
         Time.timeScale = 1f;
 
         isRotating = false;
