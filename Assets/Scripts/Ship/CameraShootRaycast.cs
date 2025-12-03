@@ -53,6 +53,7 @@ public class CameraShootRaycast : MonoBehaviour
             Debug.LogError("No se asignó el PivotCamera.");
 
         ignorePlayerMask = ~LayerMask.GetMask("Player");
+        ignorePlayerMask = ~LayerMask.GetMask("DialogTrigger");
     }
 
 
