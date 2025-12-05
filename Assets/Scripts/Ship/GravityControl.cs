@@ -8,6 +8,8 @@ public class GravityControl : MonoBehaviour
 
     [Header("Referencia a la cámara que debe rotar")]
     public Transform cameraHolder;
+    public Transform dialogueMovementPoints;
+    public Transform flipModel; // extraObjectToMoveForward
 
     [Header("Referencia a la nave (MovementShip)")]
     public MovementShip shipMovement;
@@ -18,6 +20,7 @@ public class GravityControl : MonoBehaviour
 
     private float rotationStep = 90f;
     private bool isRotating = false;
+
 
     [HideInInspector] public int currentCameraRotation = 0;
 
@@ -77,28 +80,49 @@ public class GravityControl : MonoBehaviour
     {
         isRotating = true;
 
-        // Pausa global (puede desactivarse si quieres luego)
         Time.timeScale = 0f;
 
         float duration = 0.35f;
         float t = 0f;
 
-        Quaternion startRot = cameraHolder.rotation;
-        Quaternion endRot = cameraHolder.rotation * Quaternion.Euler(0, 0, angle);
+        Quaternion startCam = cameraHolder.rotation;
+        Quaternion endCam = cameraHolder.rotation * Quaternion.Euler(0, 0, angle);
+
+        Quaternion startDialogue = dialogueMovementPoints != null ? dialogueMovementPoints.rotation : Quaternion.identity;
+        Quaternion endDialogue = dialogueMovementPoints != null ? startDialogue * Quaternion.Euler(0, 0, angle) : Quaternion.identity;
+
+        Quaternion startFlip = flipModel != null ? flipModel.rotation : Quaternion.identity;
+        Quaternion endFlip = flipModel != null ? startFlip * Quaternion.Euler(0, 0, angle) : Quaternion.identity;
 
         while (t < duration)
         {
-            cameraHolder.rotation = Quaternion.Lerp(startRot, endRot, t / duration);
+            float lerp = t / duration;
+
+            cameraHolder.rotation = Quaternion.Lerp(startCam, endCam, lerp);
+
+            if (dialogueMovementPoints != null)
+                dialogueMovementPoints.rotation = Quaternion.Lerp(startDialogue, endDialogue, lerp);
+
+            if (flipModel != null)
+                flipModel.rotation = Quaternion.Lerp(startFlip, endFlip, lerp);
+
             t += Time.unscaledDeltaTime;
             yield return null;
         }
 
-        cameraHolder.rotation = endRot;
+        cameraHolder.rotation = endCam;
+
+        if (dialogueMovementPoints != null)
+            dialogueMovementPoints.rotation = endDialogue;
+
+        if (flipModel != null)
+            flipModel.rotation = endFlip;
 
         Time.timeScale = 1f;
 
         isRotating = false;
     }
+
 
     private void RotateCamera(float angle)
     {

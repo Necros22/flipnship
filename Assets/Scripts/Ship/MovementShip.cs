@@ -19,6 +19,19 @@ public class MovementShip : MonoBehaviour
     [SerializeField] private bool cameraMovesForward = true;
 
     // -----------------------------------------------------
+    //       FLIP MODEL MOVEMENT + ROTATION (MODIFICADO)
+    // -----------------------------------------------------
+    [Header("Flip Model")]
+    public Transform extraObjectToMoveForward;
+    public bool extraObjectMovesForward = true;
+
+    // -----------------------------------------------------
+    //          DIALOGUE MOVEMENT POINTS (NUEVO)
+    // -----------------------------------------------------
+    [Header("Dialogue Movement Points")]
+    public Transform dialogueMovementPoints;
+
+    // -----------------------------------------------------
     //         CAMERA INTRO ANIMATION
     // -----------------------------------------------------
     [Header("Camera Intro Animation")]
@@ -111,6 +124,7 @@ public class MovementShip : MonoBehaviour
 
 
 
+
     // ========================================================================
     //            CAMERA INTRO ANIMATION
     // ========================================================================
@@ -175,14 +189,12 @@ public class MovementShip : MonoBehaviour
     // ========================================================================
     private void ApplyExternalSettings()
     {
-        // -------------------- GRAVITY CONTROL --------------------
         if (gravityControl != null)
         {
             gravityControl.allowRotateQ = enableRotateQ;
             gravityControl.allowRotateE = enableRotateE;
         }
 
-        // -------------------- CAMERA SHOOT ------------------------
         if (raycastShoot != null)
         {
             raycastShoot.shootingEnabled = enableShooting;
@@ -220,19 +232,26 @@ public class MovementShip : MonoBehaviour
 
 
 
-
     // ========================================================================
     //                      MOVE FORWARD
     // ========================================================================
     private void MoveForward()
-    {
-        float currentSpeed = Input.GetKey(KeyCode.Space) ? boostedForwardSpeed : forwardSpeed;
+{
+    float currentSpeed = Input.GetKey(KeyCode.Space) ? boostedForwardSpeed : forwardSpeed;
 
-        transform.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
+    transform.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
 
-        if (cameraMovesForward && cameraAnimationFinished && cameraToMoveForward != null)
-            cameraToMoveForward.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
-    }
+    if (cameraMovesForward && cameraAnimationFinished && cameraToMoveForward != null)
+        cameraToMoveForward.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
+
+    if (extraObjectMovesForward && extraObjectToMoveForward != null)
+        extraObjectToMoveForward.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
+
+    // ⭐ NUEVO: mover también los puntos del sistema de diálogos
+    if (dialogueMovementPoints != null)
+        dialogueMovementPoints.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
+}
+
 
 
 

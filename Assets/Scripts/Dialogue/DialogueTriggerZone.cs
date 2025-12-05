@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using TMPro;
 
 public class DialogueTriggerZone : MonoBehaviour
 {
@@ -12,10 +13,7 @@ public class DialogueTriggerZone : MonoBehaviour
     [Header("Efecto de Cámara")]
     public Camera targetCamera;
     public float fovChangeAmount = 10f;
-
-    [Tooltip("Curva para controlar cómo se anima el FOV")]
     public AnimationCurve fovCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
-
     private float originalFOV;
 
     // =========================================================
@@ -30,23 +28,32 @@ public class DialogueTriggerZone : MonoBehaviour
     // =========================================================
     [Header("Intro – Modelo que aparecerá")]
     public GameObject modelToActivate;
-
     private Animator modelAnimator;
 
     // =========================================================
-    //               INTRO MOVEMENT THROUGH BEZIER POINTS
+    //               MOVIMIENTO BEZIER
     // =========================================================
     [Header("Movimiento del modelo entre puntos (Bezier)")]
-    public Transform[] waypoints;      // arrastra puntos en orden
+    public Transform[] waypoints;
     public float travelDuration = 3f;
     public AnimationCurve movementCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
-
-    [Tooltip("Si activas esto verás la curva en el editor")]
     public bool drawCurve = true;
 
+    // =========================================================
+    //                    DIALOG SYSTEM
+    // =========================================================
+    [Header("Panel y diálogos")]
+    public GameObject dialoguePanel;       // Panel a activar (arrastrar)
+    public TMP_Text dialogueTMP;           // TextMeshPro dentro del panel (arrastrar)
+
+    [TextArea]
+    public string[] dialogueLines;         // Array de diálogos (arrastrar/llenar)
+
+    [Header("Typewriter / Timings")]
+    public float typewriterSpeed = 0.03f;  // tiempo entre caracteres (segundos, real time)
+    public float postLineDelay = 1.0f;     // <-- TIEMPO que se espera después de terminar cada línea (inspector)
+
     private bool alreadyTriggered = false;
-
-
 
     // =========================================================
     //                    TRIGGER ENTER
@@ -66,10 +73,8 @@ public class DialogueTriggerZone : MonoBehaviour
         StartCoroutine(FadeSequence());
     }
 
-
-
     // =========================================================
-    //                    DISABLE GAMEPLAY
+    //                  DISABLE GAMEPLAY
     // =========================================================
     private void DisableGameplay()
     {
@@ -80,22 +85,18 @@ public class DialogueTriggerZone : MonoBehaviour
         }
 
         if (cameraShoot != null)
-        {
             cameraShoot.shootingEnabled = false;
-        }
     }
 
-
-
     // =========================================================
-    //                    FOV + TIMESCALE FADE
+    //                  FOV + TIMESCALE FADE
     // =========================================================
     private IEnumerator FadeSequence()
     {
-        float startTimeScale = Time.timeScale;
+        float startTS = Time.timeScale;
         float t = 0f;
 
-        float startFOV = targetCamera.fieldOfView;
+        float startFOV = targetCamera != null ? targetCamera.fieldOfView : 60f;
         float targetFOV = originalFOV - fovChangeAmount;
 
         while (t < fadeDuration)
@@ -103,37 +104,36 @@ public class DialogueTriggerZone : MonoBehaviour
             t += Time.unscaledDeltaTime;
             float lerp = t / fadeDuration;
 
-            Time.timeScale = Mathf.Lerp(startTimeScale, 0f, lerp);
+            Time.timeScale = Mathf.Lerp(startTS, 0f, lerp);
 
             float curved = fovCurve.Evaluate(lerp);
-            targetCamera.fieldOfView = Mathf.Lerp(startFOV, targetFOV, curved);
+            if (targetCamera != null)
+                targetCamera.fieldOfView = Mathf.Lerp(startFOV, targetFOV, curved);
 
             yield return null;
         }
 
         Time.timeScale = 0f;
-        targetCamera.fieldOfView = targetFOV;
+        if (targetCamera != null)
+            targetCamera.fieldOfView = targetFOV;
 
         // activar modelo
         if (modelToActivate != null)
         {
             modelToActivate.SetActive(true);
 
-            // hacer que ignore TimeScale
             modelAnimator = modelToActivate.GetComponentInChildren<Animator>();
             if (modelAnimator != null)
                 modelAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
         }
 
         // iniciar movimiento
-        if (waypoints.Length >= 2)
+        if (waypoints != null && waypoints.Length >= 2)
             StartCoroutine(MoveOnCurve());
     }
 
-
-
     // =========================================================
-    //                     BEZIER MOVEMENT
+    //                 MOVIMIENTO BEZIER (IDEM)
     // =========================================================
     private IEnumerator MoveOnCurve()
     {
@@ -144,26 +144,155 @@ public class DialogueTriggerZone : MonoBehaviour
             t += Time.unscaledDeltaTime;
             float lerp = movementCurve.Evaluate(t / travelDuration);
 
-            // posición y rotación
             Vector3 pos = GetBezierPosition(lerp);
             Quaternion rot = GetBezierRotation(lerp);
 
-            modelToActivate.transform.position = pos;
-            modelToActivate.transform.rotation = rot;
+            if (modelToActivate != null)
+            {
+                modelToActivate.transform.position = pos;
+                modelToActivate.transform.rotation = rot;
+            }
 
             yield return null;
         }
 
-        Debug.Log("✔ Movimiento Bezier finalizado");
+        // Cuando termina el movimiento → INICIA DIÁLOGOS
+        StartCoroutine(StartDialogueSequence());
+    }
+
+    // =========================================================
+    //                 DIALOG SEQUENCE
+    // =========================================================
+    private IEnumerator StartDialogueSequence()
+    {
+        if (dialoguePanel != null)
+            dialoguePanel.SetActive(true);
+
+        if (dialogueTMP == null)
+        {
+            Debug.LogWarning("Dialogue TMP not assigned.");
+            yield break;
+        }
+
+        for (int i = 0; i < dialogueLines.Length; i++)
+        {
+            // Typewriter: escribe texto
+            yield return StartCoroutine(Typewriter(dialogueLines[i]));
+
+            // Espera el tiempo configurado en el inspector después de terminar la línea
+            yield return new WaitForSecondsRealtime(postLineDelay);
+        }
+
+        // Terminar diálogos
+        if (dialoguePanel != null)
+            dialoguePanel.SetActive(false);
+
+        // Iniciar recorrido invertido
+        StartCoroutine(ReturnMovement());
+    }
+
+    // =========================================================
+    //                 TYPEWRITER EFFECT
+    // =========================================================
+    private IEnumerator Typewriter(string text)
+    {
+        dialogueTMP.text = "";
+
+        for (int i = 0; i < text.Length; i++)
+        {
+            dialogueTMP.text += text[i];
+
+            // espera entre caracteres (tiempo real, no afectado por timescale)
+            yield return new WaitForSecondsRealtime(typewriterSpeed);
+        }
+        // Aquí justo termina la escritura de la última tecla -> empieza el postLineDelay en StartDialogueSequence
+    }
+
+    // =========================================================
+    //                 MOVIMIENTO REVERSE
+    // =========================================================
+    private IEnumerator ReturnMovement()
+    {
+        float t = 0f;
+
+        while (t < travelDuration)
+        {
+            t += Time.unscaledDeltaTime;
+            float lerp = movementCurve.Evaluate(t / travelDuration);
+
+            float back = 1f - lerp;
+
+            Vector3 pos = GetBezierPosition(back);
+            Quaternion rot = GetBezierRotation(back);
+
+            if (modelToActivate != null)
+            {
+                modelToActivate.transform.position = pos;
+                modelToActivate.transform.rotation = rot;
+            }
+
+            yield return null;
+        }
+
+        if (modelToActivate != null)
+            modelToActivate.SetActive(false);
+
+        RestoreEverything();
+    }
+
+    // =========================================================
+    //                     RESTORE SYSTEM
+    // =========================================================
+    private void RestoreEverything()
+    {
+        // restaurar tiempo
+        Time.timeScale = 1f;
+
+        // restaurar gameplay
+        if (gravityControl != null)
+        {
+            gravityControl.allowRotateQ = true;
+            gravityControl.allowRotateE = true;
+        }
+
+        if (cameraShoot != null)
+            cameraShoot.shootingEnabled = true;
+
+        // Ahora hacer el FOV smooth, no instantáneo:
+        if (targetCamera != null)
+            StartCoroutine(SmoothReturnFOV());
+    }
+
+    private IEnumerator SmoothReturnFOV()
+    {
+        float duration = fadeDuration;        // usa el mismo tiempo o puedes hacer otro si quieres
+        float t = 0f;
+
+        float startFOV = targetCamera.fieldOfView;
+        float endFOV = originalFOV;
+
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;          // usa tiempo real
+            float lerp = t / duration;
+
+            float curved = fovCurve.Evaluate(lerp);   // usa la misma curva de entrada
+            targetCamera.fieldOfView = Mathf.Lerp(startFOV, endFOV, curved);
+
+            yield return null;
+        }
+
+        targetCamera.fieldOfView = endFOV; // asegurar valor final exacto
     }
 
 
-
     // =========================================================
-    //                BEZIER POSITION & ROTATION
+    //                BEZIER CALCULATION
     // =========================================================
     private Vector3 GetBezierPosition(float t)
     {
+        if (waypoints == null || waypoints.Length == 0) return Vector3.zero;
+
         if (waypoints.Length == 2)
             return Vector3.Lerp(waypoints[0].position, waypoints[1].position, t);
 
@@ -175,7 +304,6 @@ public class DialogueTriggerZone : MonoBehaviour
 
         float lt = scaled - idx;
 
-        // puntos para curva Bezier cúbica
         Vector3 p0 = waypoints[idx].position;
         Vector3 p1 = waypoints[idx].position + waypoints[idx].forward * 2f;
         Vector3 p2 = waypoints[idx + 1].position - waypoints[idx + 1].forward * 2f;
@@ -189,18 +317,23 @@ public class DialogueTriggerZone : MonoBehaviour
 
     private Quaternion GetBezierRotation(float t)
     {
+        // Si estamos al final exacto del recorrido → usar forward del último waypoint
+        if (t >= 0.999f)
+        {
+            Transform last = waypoints[waypoints.Length - 1];
+            return last.rotation;
+        }
+
         Vector3 pos = GetBezierPosition(t);
-        Vector3 next = GetBezierPosition(Mathf.Min(t + 0.01f, 1f));
+        Vector3 next = GetBezierPosition(t + 0.01f);
 
         Vector3 dir = (next - pos).normalized;
 
-        return dir == Vector3.zero ? modelToActivate.transform.rotation : Quaternion.LookRotation(dir);
+        return dir == Vector3.zero ? Quaternion.identity : Quaternion.LookRotation(dir);
     }
 
-
-
     // =========================================================
-    //               DRAW CURVE IN SCENE VIEW
+    //                 DRAW CURVE IN EDITOR
     // =========================================================
     private void OnDrawGizmos()
     {
@@ -209,11 +342,12 @@ public class DialogueTriggerZone : MonoBehaviour
 
         Gizmos.color = Color.cyan;
 
-        Vector3 prev = waypoints[0].position;
+        Vector3 prev = GetBezierPosition(0f);
 
-        for (int i = 1; i <= 40; i++)
+        int segments = 40;
+        for (int i = 1; i <= segments; i++)
         {
-            float t = i / 40f;
+            float t = i / (float)segments;
             Vector3 p = GetBezierPosition(t);
             Gizmos.DrawLine(prev, p);
             prev = p;
