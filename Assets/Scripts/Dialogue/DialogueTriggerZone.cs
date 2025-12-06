@@ -56,6 +56,48 @@ public class DialogueTriggerZone : MonoBehaviour
     private bool alreadyTriggered = false;
 
     // =========================================================
+    //     MODIFICACIÓN OPCIONAL DE PARÁMETROS EXTERNOS
+    // =========================================================
+    [Header("Modificar parámetros externos al finalizar")]
+    public bool modifyExternalParameters = false;
+
+    [Header("GravityControl – Ajustes")]
+    public bool set_allowRotateQ = true;
+    public bool set_allowRotateE = true;
+
+    [Header("CameraShootRaycast – Ajustes")]
+    public bool set_shootingEnabled = true;
+
+    public bool set_unlockAntiGravity = true;
+    public bool set_unlockZeroGravity = true;
+    public bool set_unlockMaxGravity = true;
+
+
+    // Ejecutado solo si modifyExternalParameters == true
+    private void ApplyExternalParameterChanges()
+    {
+        if (!modifyExternalParameters) return;
+
+        // GRAVITY CONTROL
+        if (gravityControl != null)
+        {
+            gravityControl.allowRotateQ = set_allowRotateQ;
+            gravityControl.allowRotateE = set_allowRotateE;
+        }
+
+        // CAMERA SHOOT SYSTEM
+        if (cameraShoot != null)
+        {
+            cameraShoot.shootingEnabled = set_shootingEnabled;
+
+            cameraShoot.unlockAntiGravity = set_unlockAntiGravity;
+            cameraShoot.unlockZeroGravity = set_unlockZeroGravity;
+            cameraShoot.unlockMaxGravity = set_unlockMaxGravity;
+        }
+    }
+
+
+    // =========================================================
     //                    TRIGGER ENTER
     // =========================================================
     private void OnTriggerEnter(Collider other)
@@ -248,7 +290,7 @@ public class DialogueTriggerZone : MonoBehaviour
         // restaurar tiempo
         Time.timeScale = 1f;
 
-        // restaurar gameplay
+        // restaurar gameplay básico
         if (gravityControl != null)
         {
             gravityControl.allowRotateQ = true;
@@ -258,10 +300,15 @@ public class DialogueTriggerZone : MonoBehaviour
         if (cameraShoot != null)
             cameraShoot.shootingEnabled = true;
 
-        // Ahora hacer el FOV smooth, no instantáneo:
+        // restaurar FOV
         if (targetCamera != null)
             StartCoroutine(SmoothReturnFOV());
+
+        // aplicar modificaciones personalizadas si están activadas
+        ApplyExternalParameterChanges();
     }
+
+
 
     private IEnumerator SmoothReturnFOV()
     {
