@@ -425,6 +425,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bf69e4c51de52b459329f06881c236c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentHealth: 5
+  healthImageUI: {fileID: 0}
+  healthSprites: []
+  sceneToReload: 
+  damagingTags:
+  - RingDoor
+  - Damage
+  - Saw
+  damagingNames:
+  - GenDoor
+  - ShootDoor
+  - IsoDoor
+  - Block
 --- !u!1 &5559702053952544276
 GameObject:
   m_ObjectHideFlags: 0
@@ -958,10 +971,40 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: -674382357360132614, guid: a9d90a8e0906dd4409983b2a0aaa930e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 724969966210973412}
   m_SourcePrefab: {fileID: 100100000, guid: a9d90a8e0906dd4409983b2a0aaa930e, type: 3}
 --- !u!4 &4258341790151027136 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: a9d90a8e0906dd4409983b2a0aaa930e, type: 3}
   m_PrefabInstance: {fileID: 4364571014573215275}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &5347477993693934545 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -674382357360132614, guid: a9d90a8e0906dd4409983b2a0aaa930e, type: 3}
+  m_PrefabInstance: {fileID: 4364571014573215275}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &724969966210973412
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5347477993693934545}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 56e7f61176529fb4ca829f94eb678e7e, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 
 public class CameraShootRaycast : MonoBehaviour
 {
@@ -36,9 +37,28 @@ public class CameraShootRaycast : MonoBehaviour
     [Header("Tipo de Disparo Actual")]
     public ShotType currentShotType = ShotType.AntiGravity;
 
-    // Último afectado por ZeroGravity (bloque o sierra)
+    // Últimos paralizados
     private CustomDirectionalGravity lastZeroGravityTarget;
     private SawController lastSawParalyzed;
+
+
+    // ================================================================
+    //                  UI DE DISPAROS (NUEVO)
+    // ================================================================
+    [System.Serializable]
+    public class ShotUI
+    {
+        public Image imageIcon;
+
+        public Sprite lockedSprite;
+        public Sprite enabledSprite;
+        public Sprite selectedSprite;
+    }
+
+    [Header("UI – Iconos del HUD de disparos")]
+    public ShotUI antiGravityUI;
+    public ShotUI zeroGravityUI;
+    public ShotUI maxGravityUI;
 
 
 
@@ -53,8 +73,8 @@ public class CameraShootRaycast : MonoBehaviour
             Debug.LogError("No se asignó el PivotCamera.");
 
         ignorePlayerMask = ~LayerMask.GetMask("Player");
-        ignorePlayerMask = ~LayerMask.GetMask("DialogTrigger");
     }
+
 
 
     void Update()
@@ -67,27 +87,78 @@ public class CameraShootRaycast : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
             FireRay();
+
+        UpdateShotUI();   // <--- NUEVO: actualizar UI SIEMPRE
     }
 
+
+
+    // ==================================================================
+    //                      MANEJO DE UI DE DISPAROS
+    // ==================================================================
+    void UpdateShotUI()
+    {
+        // ANTI-GRAVITY
+        UpdateSingleUI(
+            antiGravityUI,
+            unlockAntiGravity,
+            currentShotType == ShotType.AntiGravity
+        );
+
+        // ZERO-GRAVITY
+        UpdateSingleUI(
+            zeroGravityUI,
+            unlockZeroGravity,
+            currentShotType == ShotType.ZeroGravity
+        );
+
+        // MAX-GRAVITY
+        UpdateSingleUI(
+            maxGravityUI,
+            unlockMaxGravity,
+            currentShotType == ShotType.MaxGravity
+        );
+    }
+
+
+    void UpdateSingleUI(ShotUI ui, bool unlocked, bool selected)
+    {
+        if (ui.imageIcon == null)
+            return;
+
+        if (!unlocked)
+        {
+            ui.imageIcon.sprite = ui.lockedSprite;
+            return; // Locked tiene prioridad
+        }
+
+        if (selected)
+        {
+            ui.imageIcon.sprite = ui.selectedSprite;
+            return;
+        }
+
+        ui.imageIcon.sprite = ui.enabledSprite;
+    }
+
+
+
+    // ==================================================================
+    // RESTO DE FUNCIONES (RAYCAST, DISPARO, ETC)
+    // ==================================================================
 
     void HandleShotSelection()
     {
         if (!shootingEnabled) return;
 
         if (Input.GetKeyDown(KeyCode.Alpha1) && unlockAntiGravity)
-        {
             currentShotType = ShotType.AntiGravity;
-        }
 
         if (Input.GetKeyDown(KeyCode.Alpha2) && unlockZeroGravity)
-        {
             currentShotType = ShotType.ZeroGravity;
-        }
 
         if (Input.GetKeyDown(KeyCode.Alpha3) && unlockMaxGravity)
-        {
             currentShotType = ShotType.MaxGravity;
-        }
     }
 
 
@@ -121,7 +192,6 @@ public class CameraShootRaycast : MonoBehaviour
             Debug.DrawRay(origin, direction * currentRayDistance, idleRayColor);
         }
     }
-
 
 
     bool RaycastIgnoringButtons(Vector3 origin, Vector3 direction, out RaycastHit validHit, float maxDist)
@@ -178,30 +248,21 @@ public class CameraShootRaycast : MonoBehaviour
         Debug.DrawRay(origin, direction * rayLength, clickRayColor, clickRayDuration);
 
 
-        // =====================================================
-        //    1) ¿ES UNA SIERRA?
-        // =====================================================
-
+        // ==== ¿SIERRA? ====================================================
         SawController saw = hit.collider.GetComponentInParent<SawController>();
-
         if (saw != null)
         {
             if (currentShotType == ShotType.ZeroGravity)
             {
-                // Si había un bloque paralizado → lo desparalizamos
                 if (lastZeroGravityTarget != null)
                 {
                     lastZeroGravityTarget.DisableZeroGravity();
                     lastZeroGravityTarget = null;
                 }
 
-                // Si había una sierra paralizada → la desparalizamos
                 if (lastSawParalyzed != null && lastSawParalyzed != saw)
-                {
                     lastSawParalyzed.UnParalyze();
-                }
 
-                // Paralizamos esta sierra
                 saw.Paralyze();
                 lastSawParalyzed = saw;
             }
@@ -214,10 +275,7 @@ public class CameraShootRaycast : MonoBehaviour
         }
 
 
-
-        // =====================================================
-        //    2) ¿ES UN OBJETO AFECTADO POR GRAVEDAD?
-        // =====================================================
+        // ==== ¿OBJETO GRAVITY-AFFECTED? ====================================
         if (!hit.collider.CompareTag("GravityAffected"))
         {
             Debug.Log($"Impacto sin efecto en {hit.collider.name}");
@@ -233,10 +291,6 @@ public class CameraShootRaycast : MonoBehaviour
         }
 
 
-        // =====================================================
-        //    3) APLICAR EFECTO
-        // =====================================================
-
         switch (currentShotType)
         {
             case ShotType.AntiGravity:
@@ -245,14 +299,12 @@ public class CameraShootRaycast : MonoBehaviour
 
             case ShotType.ZeroGravity:
 
-                // Si había una sierra paralizada → desparalizar
                 if (lastSawParalyzed != null)
                 {
                     lastSawParalyzed.UnParalyze();
                     lastSawParalyzed = null;
                 }
 
-                // Si había un bloque paralizado → desparalizar
                 if (lastZeroGravityTarget != null && lastZeroGravityTarget != gravityScript)
                     lastZeroGravityTarget.DisableZeroGravity();
 
