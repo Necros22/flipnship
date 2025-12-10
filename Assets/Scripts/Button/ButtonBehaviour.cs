@@ -3,31 +3,12 @@ using System.Reflection;
 
 public class ButtonBehaviour : MonoBehaviour
 {
-    // ------------------------------------------------------------
-    //                       LIGHT REFERENCE
-    // ------------------------------------------------------------
-    [Header("Luz del Botón (Point Light obligatorio)")]
     public Light buttonPointLight;
 
-
-    // ------------------------------------------------------------
-    //                 TARGET FUNCTION SETTINGS
-    // ------------------------------------------------------------
-    [Header("Función a Ejecutar (Solo botones normales o principal)")]
     public GameObject targetObject;
-
-    [Tooltip("Nombre del script dentro del targetObject")]
     public string targetScriptName;
-
-    [Tooltip("Nombre de la función que se llamará")]
     public string targetFunctionName;
 
-
-    // ------------------------------------------------------------
-    //              EXTRA FUNCTIONS  (NEW FEATURE)
-    // ------------------------------------------------------------
-    [Header("Funciones Extra (Opcional)")]
-    [Tooltip("Si está activado, al presionar este botón también se llamarán funciones extra.")]
     public bool callExtraFunctions = false;
 
     [System.Serializable]
@@ -38,46 +19,28 @@ public class ButtonBehaviour : MonoBehaviour
         public string extraTargetFunctionName;
     }
 
-    [Tooltip("Lista de funciones extra a ejecutar")]
     public ExtraFunctionCall[] extraFunctions;
 
-
-    // ------------------------------------------------------------
-    //                    BASIC BUTTON SETTINGS
-    // ------------------------------------------------------------
-    [Header("Configuración del Botón")]
-    [Tooltip("Tag de objetos que pueden activar este botón")]
     public string activatorTag = "GravityAffected";
-
-    [Tooltip("Si es true, el botón NO se apaga al salir el objeto")]
     public bool staysOnOnceActivated = false;
 
     private int activatorCount = 0;
     public bool isActive = false;
 
-
-    // ------------------------------------------------------------
-    //                    MULTI BUTTON SYSTEM
-    // ------------------------------------------------------------
-    [Header("Sistema de Múltiples Botones")]
     public bool isMultiButton = false;
-
-    [Tooltip("Marcar solo si este botón es el PRINCIPAL del sistema")]
     public bool isMainButton = false;
-
-    [Tooltip("Botones requeridos (solo para el botón principal)")]
     public ButtonBehaviour[] requiredButtons;
-
-    [Tooltip("Referencia al botón principal (solo en botones esclavos)")]
     public ButtonBehaviour mainButtonReference;
 
+    private AudioSource buttonSFX;
 
-    // ------------------------------------------------------------
-    //                        UNITY METHODS
-    // ------------------------------------------------------------
+
     private void Start()
     {
         UpdateLightColor();
+        GameObject sfxObj = GameObject.Find("ButtonSFX");
+        if (sfxObj != null)
+            buttonSFX = sfxObj.GetComponent<AudioSource>();
     }
 
     private void OnTriggerEnter(Collider other)
@@ -108,16 +71,14 @@ public class ButtonBehaviour : MonoBehaviour
             mainButtonReference?.SlaveButtonDeactivated();
     }
 
-
-    // ------------------------------------------------------------
-    //                  BUTTON STATE HANDLING
-    // ------------------------------------------------------------
     private void ActivateButton()
     {
         isActive = true;
         UpdateLightColor();
 
-        // BOTÓN NORMAL
+        if (buttonSFX != null)
+            buttonSFX.Play();
+
         if (!isMultiButton)
         {
             CallTargetFunction();
@@ -125,19 +86,14 @@ public class ButtonBehaviour : MonoBehaviour
             return;
         }
 
-        // BOTÓN PRINCIPAL
         if (isMainButton)
         {
             CheckAllButtons();
             return;
         }
 
-        // BOTÓN ESCLAVO
         if (isMultiButton && !isMainButton)
-        {
-            // Aún así puede llamar funciones extra
             CallExtraFunctionsIfEnabled();
-        }
     }
 
     private void DeactivateButton()
@@ -149,21 +105,12 @@ public class ButtonBehaviour : MonoBehaviour
             CheckAllButtons();
     }
 
-
-    // ------------------------------------------------------------
-    //                     UPDATE LIGHT STATE
-    // ------------------------------------------------------------
     private void UpdateLightColor()
     {
         if (buttonPointLight == null) return;
-
         buttonPointLight.color = isActive ? Color.green : Color.red;
     }
 
-
-    // ------------------------------------------------------------
-    //                     MULTI BUTTON — SLAVE CALLS
-    // ------------------------------------------------------------
     public void SlaveButtonActivated()
     {
         if (isMainButton)
@@ -176,10 +123,6 @@ public class ButtonBehaviour : MonoBehaviour
             CheckAllButtons();
     }
 
-
-    // ------------------------------------------------------------
-    //                    MULTI BUTTON — MAIN LOGIC
-    // ------------------------------------------------------------
     private void CheckAllButtons()
     {
         if (!isMainButton)
@@ -194,15 +137,10 @@ public class ButtonBehaviour : MonoBehaviour
                 return;
         }
 
-        // Si pasa, ejecuta función principal y extras
         CallTargetFunction();
         CallExtraFunctionsIfEnabled();
     }
 
-
-    // ------------------------------------------------------------
-    //                     CALL TARGET FUNCTION
-    // ------------------------------------------------------------
     private void CallTargetFunction()
     {
         InvokeFunction(targetObject, targetScriptName, targetFunctionName);
@@ -211,65 +149,38 @@ public class ButtonBehaviour : MonoBehaviour
     private void InvokeFunction(GameObject obj, string scriptName, string functionName)
     {
         if (obj == null || string.IsNullOrWhiteSpace(scriptName) || string.IsNullOrWhiteSpace(functionName))
-        {
-            Debug.LogWarning("ButtonBehaviour: Falta configurar una función.");
             return;
-        }
 
         Component script = obj.GetComponent(scriptName);
         if (script == null)
-        {
-            Debug.LogWarning("Script no encontrado: " + scriptName);
             return;
-        }
 
         MethodInfo method = script.GetType().GetMethod(functionName);
         if (method == null)
-        {
-            Debug.LogWarning("Método no encontrado: " + functionName);
             return;
-        }
 
         method.Invoke(script, null);
     }
 
-
-    // ------------------------------------------------------------
-    //              EXTRA FUNCTION CALL SYSTEM (NEW)
-    // ------------------------------------------------------------
     private void CallExtraFunctionsIfEnabled()
     {
         if (!callExtraFunctions) return;
         if (extraFunctions == null) return;
 
         foreach (var extra in extraFunctions)
-        {
             InvokeFunction(extra.extraTargetObject, extra.extraTargetScriptName, extra.extraTargetFunctionName);
-        }
     }
 
-
-    // ------------------------------------------------------------
-    //                     EXTERNAL RESET FUNCTION
-    // ------------------------------------------------------------
     public void ForceResetButton()
     {
         if (!staysOnOnceActivated)
-        {
-            Debug.Log("ForceResetButton: Este botón no está configurado para permanecer encendido.");
             return;
-        }
 
         if (!isActive)
-        {
-            Debug.Log("ForceResetButton: El botón ya está apagado.");
             return;
-        }
 
         activatorCount = 0;
         isActive = false;
         UpdateLightColor();
-
-        Debug.Log("ForceResetButton: Botón reiniciado manualmente.");
     }
 }

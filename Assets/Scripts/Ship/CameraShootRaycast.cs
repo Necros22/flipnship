@@ -17,14 +17,13 @@ public class CameraShootRaycast : MonoBehaviour
     public float maxRayDistance = 3000f;
     public float maxDynamicDistance = 100f;
 
-    [Header("Visualización")]
+    [Header("Visualización Raycast Debug")]
     public float clickRayDuration = 30f;
     public Color idleRayColor = Color.yellow;
     public Color clickRayColor = Color.cyan;
 
-    private Camera cam;
-    private float currentRayDistance;
-    private int ignorePlayerMask;
+    [Header("Audio")]
+    public AudioSource shootSFX;
 
     [Header("Control General de Disparos")]
     public bool shootingEnabled = true;
@@ -37,45 +36,40 @@ public class CameraShootRaycast : MonoBehaviour
     [Header("Tipo de Disparo Actual")]
     public ShotType currentShotType = ShotType.AntiGravity;
 
-    // Últimos paralizados
-    private CustomDirectionalGravity lastZeroGravityTarget;
-    private SawController lastSawParalyzed;
-
-
-    // ================================================================
-    //                  UI DE DISPAROS (NUEVO)
-    // ================================================================
-    [System.Serializable]
-    public class ShotUI
-    {
-        public Image imageIcon;
-
-        public Sprite lockedSprite;
-        public Sprite enabledSprite;
-        public Sprite selectedSprite;
-    }
-
     [Header("UI – Iconos del HUD de disparos")]
     public ShotUI antiGravityUI;
     public ShotUI zeroGravityUI;
     public ShotUI maxGravityUI;
 
+    [System.Serializable]
+    public class ShotUI
+    {
+        public Image imageIcon;
+        public Sprite lockedSprite;
+        public Sprite enabledSprite;
+        public Sprite selectedSprite;
+    }
 
+    [Header("Láser Visual")]
+    public GameObject laserPrefab;
+    public Material antiGravityMat;
+    public Material zeroGravityMat;
+    public Material maxGravityMat;
+    public float laserDuration = 1f;
+
+    private GameObject activeLaser;
+    private Camera cam;
+    private float currentRayDistance;
+    private int ignorePlayerMask;
+
+    private CustomDirectionalGravity lastZeroGravityTarget;
+    private SawController lastSawParalyzed;
 
     void Start()
     {
         cam = Camera.main;
-
-        if (cam == null)
-            Debug.LogError("No se encontró una cámara con el tag 'MainCamera'.");
-
-        if (pivotCamera == null)
-            Debug.LogError("No se asignó el PivotCamera.");
-
         ignorePlayerMask = ~LayerMask.GetMask("Player");
     }
-
-
 
     void Update()
     {
@@ -86,66 +80,44 @@ public class CameraShootRaycast : MonoBehaviour
         UpdateAimRay();
 
         if (Input.GetMouseButtonDown(0))
-            FireRay();
+        {
+            if (IsCurrentShotUnlocked())
+            {
+                PlayShotSFX();
+                FireRay();
+            }
+        }
 
-        UpdateShotUI();   // <--- NUEVO: actualizar UI SIEMPRE
+        UpdateShotUI();
     }
 
+    void PlayShotSFX()
+    {
+        if (shootSFX != null)
+            shootSFX.Play();
+    }
 
+    bool IsCurrentShotUnlocked()
+    {
+        return (currentShotType == ShotType.AntiGravity && unlockAntiGravity) ||
+               (currentShotType == ShotType.ZeroGravity && unlockZeroGravity) ||
+               (currentShotType == ShotType.MaxGravity && unlockMaxGravity);
+    }
 
-    // ==================================================================
-    //                      MANEJO DE UI DE DISPAROS
-    // ==================================================================
     void UpdateShotUI()
     {
-        // ANTI-GRAVITY
-        UpdateSingleUI(
-            antiGravityUI,
-            unlockAntiGravity,
-            currentShotType == ShotType.AntiGravity
-        );
-
-        // ZERO-GRAVITY
-        UpdateSingleUI(
-            zeroGravityUI,
-            unlockZeroGravity,
-            currentShotType == ShotType.ZeroGravity
-        );
-
-        // MAX-GRAVITY
-        UpdateSingleUI(
-            maxGravityUI,
-            unlockMaxGravity,
-            currentShotType == ShotType.MaxGravity
-        );
+        UpdateSingleUI(antiGravityUI, unlockAntiGravity, currentShotType == ShotType.AntiGravity);
+        UpdateSingleUI(zeroGravityUI, unlockZeroGravity, currentShotType == ShotType.ZeroGravity);
+        UpdateSingleUI(maxGravityUI, unlockMaxGravity, currentShotType == ShotType.MaxGravity);
     }
-
 
     void UpdateSingleUI(ShotUI ui, bool unlocked, bool selected)
     {
-        if (ui.imageIcon == null)
-            return;
-
-        if (!unlocked)
-        {
-            ui.imageIcon.sprite = ui.lockedSprite;
-            return; // Locked tiene prioridad
-        }
-
-        if (selected)
-        {
-            ui.imageIcon.sprite = ui.selectedSprite;
-            return;
-        }
-
+        if (ui.imageIcon == null) return;
+        if (!unlocked) { ui.imageIcon.sprite = ui.lockedSprite; return; }
+        if (selected) { ui.imageIcon.sprite = ui.selectedSprite; return; }
         ui.imageIcon.sprite = ui.enabledSprite;
     }
-
-
-
-    // ==================================================================
-    // RESTO DE FUNCIONES (RAYCAST, DISPARO, ETC)
-    // ==================================================================
 
     void HandleShotSelection()
     {
@@ -160,7 +132,6 @@ public class CameraShootRaycast : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha3) && unlockMaxGravity)
             currentShotType = ShotType.MaxGravity;
     }
-
 
     void UpdateAimRay()
     {
@@ -193,11 +164,9 @@ public class CameraShootRaycast : MonoBehaviour
         }
     }
 
-
     bool RaycastIgnoringButtons(Vector3 origin, Vector3 direction, out RaycastHit validHit, float maxDist)
     {
         RaycastHit[] hits = Physics.RaycastAll(origin, direction, maxDist, ignorePlayerMask);
-
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
         foreach (RaycastHit h in hits)
@@ -213,15 +182,8 @@ public class CameraShootRaycast : MonoBehaviour
         return false;
     }
 
-
     void FireRay()
     {
-        if (!shootingEnabled)
-        {
-            Debug.Log("Disparo desactivado.");
-            return;
-        }
-
         Ray cameraRay = cam.ScreenPointToRay(Input.mousePosition);
 
         Vector3 targetPoint;
@@ -239,16 +201,15 @@ public class CameraShootRaycast : MonoBehaviour
 
         if (!hitSomething)
         {
-            Debug.Log("Disparo al vacío.");
             Debug.DrawRay(origin, direction * rayLength, clickRayColor, clickRayDuration);
+            CreateLaser(origin, direction, rayLength);
             return;
         }
 
         rayLength = hit.distance;
         Debug.DrawRay(origin, direction * rayLength, clickRayColor, clickRayDuration);
+        CreateLaser(origin, direction, rayLength);
 
-
-        // ==== ¿SIERRA? ====================================================
         SawController saw = hit.collider.GetComponentInParent<SawController>();
         if (saw != null)
         {
@@ -270,26 +231,15 @@ public class CameraShootRaycast : MonoBehaviour
             {
                 saw.UnParalyze();
             }
-
             return;
         }
 
-
-        // ==== ¿OBJETO GRAVITY-AFFECTED? ====================================
         if (!hit.collider.CompareTag("GravityAffected"))
-        {
-            Debug.Log($"Impacto sin efecto en {hit.collider.name}");
             return;
-        }
 
         CustomDirectionalGravity gravityScript = hit.collider.GetComponent<CustomDirectionalGravity>();
-
         if (gravityScript == null)
-        {
-            Debug.LogWarning($"{hit.collider.name} no tiene CustomDirectionalGravity.");
             return;
-        }
-
 
         switch (currentShotType)
         {
@@ -298,7 +248,6 @@ public class CameraShootRaycast : MonoBehaviour
                 break;
 
             case ShotType.ZeroGravity:
-
                 if (lastSawParalyzed != null)
                 {
                     lastSawParalyzed.UnParalyze();
@@ -317,4 +266,41 @@ public class CameraShootRaycast : MonoBehaviour
                 break;
         }
     }
+
+    void CreateLaser(Vector3 origin, Vector3 direction, float length)
+    {
+        if (activeLaser != null)
+            Destroy(activeLaser);
+
+        // Crear láser
+        activeLaser = Instantiate(laserPrefab, origin, Quaternion.LookRotation(direction));
+
+        // Estirar en Z
+        Vector3 scale = activeLaser.transform.localScale;
+        scale.z = length;
+        activeLaser.transform.localScale = scale;
+
+        // 🔥 MOVERLO HACIA ADELANTE LA MITAD DEL LARGO
+        activeLaser.transform.position += direction * (length * 0.5f);
+
+        MeshRenderer r = activeLaser.GetComponent<MeshRenderer>();
+
+        switch (currentShotType)
+        {
+            case ShotType.AntiGravity:
+                r.material = antiGravityMat;
+                break;
+
+            case ShotType.ZeroGravity:
+                r.material = zeroGravityMat;
+                break;
+
+            case ShotType.MaxGravity:
+                r.material = maxGravityMat;
+                break;
+        }
+
+        Destroy(activeLaser, laserDuration);
+    }
+
 }

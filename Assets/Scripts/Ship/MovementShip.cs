@@ -49,7 +49,7 @@ public class MovementShip : MonoBehaviour
     private Quaternion camStartRot;
 
     // -----------------------------------------------------
-    //   REFERENCES TO EXTERNAL SYSTEMS (NEW)
+    //   REFERENCES TO EXTERNAL SYSTEMS
     // -----------------------------------------------------
     [Header("GravityControl Settings To Apply After Intro")]
     public GravityControl gravityControl;
@@ -97,6 +97,12 @@ public class MovementShip : MonoBehaviour
     private float verticalInput;
     private int cameraRotIndex = 0;
 
+    // -----------------------------------------------------
+    // ⭐ NUEVO: audio del cambio de gravedad
+    // -----------------------------------------------------
+    [Header("SFX Settings")]
+    public AudioSource gravityChangeSFX;
+
 
 
     public void SetRotationIndex(int index)
@@ -120,8 +126,32 @@ public class MovementShip : MonoBehaviour
             MoveLaterally();
 
         RotateShip();
+
+        HandleGravityChangeSound();   // ⭐ NUEVO
     }
 
+
+
+    // ========================================================================
+    //        ⭐ NUEVO — SONIDO AL CAMBIAR GRAVEDAD (Q/E)
+    // ========================================================================
+    private void HandleGravityChangeSound()
+    {
+        if (gravityControl == null) return;
+        if (gravityChangeSFX == null) return;
+
+        // Q rotation
+        if (Input.GetKeyDown(KeyCode.Q) && gravityControl.allowRotateQ)
+        {
+            gravityChangeSFX.Play();
+        }
+
+        // E rotation
+        if (Input.GetKeyDown(KeyCode.E) && gravityControl.allowRotateE)
+        {
+            gravityChangeSFX.Play();
+        }
+    }
 
 
 
@@ -178,14 +208,14 @@ public class MovementShip : MonoBehaviour
 
             allowDirectionalMovement = true;
 
-            ApplyExternalSettings();   // ← NUEVO: aplicar permisos externos
+            ApplyExternalSettings();
         }
     }
 
 
 
     // ========================================================================
-    //           APPLY SETTINGS TO OTHER SCRIPTS (NEW)
+    //           APPLY SETTINGS TO OTHER SCRIPTS
     // ========================================================================
     private void ApplyExternalSettings()
     {
@@ -236,22 +266,20 @@ public class MovementShip : MonoBehaviour
     //                      MOVE FORWARD
     // ========================================================================
     private void MoveForward()
-{
-    float currentSpeed = Input.GetKey(KeyCode.Space) ? boostedForwardSpeed : forwardSpeed;
+    {
+        float currentSpeed = Input.GetKey(KeyCode.Space) ? boostedForwardSpeed : forwardSpeed;
 
-    transform.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
+        transform.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
 
-    if (cameraMovesForward && cameraAnimationFinished && cameraToMoveForward != null)
-        cameraToMoveForward.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
+        if (cameraMovesForward && cameraAnimationFinished && cameraToMoveForward != null)
+            cameraToMoveForward.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
 
-    if (extraObjectMovesForward && extraObjectToMoveForward != null)
-        extraObjectToMoveForward.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
+        if (extraObjectMovesForward && extraObjectToMoveForward != null)
+            extraObjectToMoveForward.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
 
-    // ⭐ NUEVO: mover también los puntos del sistema de diálogos
-    if (dialogueMovementPoints != null)
-        dialogueMovementPoints.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
-}
-
+        if (dialogueMovementPoints != null)
+            dialogueMovementPoints.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
+    }
 
 
 

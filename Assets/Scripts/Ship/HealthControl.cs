@@ -19,6 +19,9 @@ public class HealthControl : MonoBehaviour
     public string[] damagingTags = { "RingDoor", "Damage", "Saw" };
     public string[] damagingNames = { "GenDoor", "ShootDoor", "IsoDoor", "Block" };
 
+    [Header("SFX")]
+    public AudioSource damageSFX;
+
     private bool isDead = false;
 
     private void Start()
@@ -51,6 +54,9 @@ public class HealthControl : MonoBehaviour
 
     private void TakeDamage(GameObject damagingObject)
     {
+        if (damageSFX != null)
+            damageSFX.Play();
+
         Destroy(damagingObject);
 
         currentHealth--;
@@ -66,9 +72,7 @@ public class HealthControl : MonoBehaviour
     private void UpdateHealthUI()
     {
         if (healthImageUI == null || healthSprites.Length < 5)
-        {
             return;
-        }
 
         int index = Mathf.Clamp(5 - currentHealth, 0, 4);
         healthImageUI.sprite = healthSprites[index];
@@ -79,9 +83,7 @@ public class HealthControl : MonoBehaviour
         isDead = true;
 
         if (string.IsNullOrEmpty(sceneToReload))
-        {
             return;
-        }
 
         SceneManager.LoadScene(sceneToReload);
     }
