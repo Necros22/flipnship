@@ -4,7 +4,7 @@ using TMPro;
 
 public class DialogueTriggerZone : MonoBehaviour
 {
-    [Header("Tiempo para hacer fade a TimeScale=0")]
+    [Header("Tiempo para fade")]
     public float fadeDuration = 0.5f;
 
     [Header("Efecto de Cámara")]
@@ -17,11 +17,11 @@ public class DialogueTriggerZone : MonoBehaviour
     public GravityControl gravityControl;
     public CameraShootRaycast cameraShoot;
 
-    [Header("Intro – Modelo que aparecerá")]
+    [Header("Intro")]
     public GameObject modelToActivate;
     private Animator modelAnimator;
 
-    [Header("Movimiento del modelo entre puntos (Bezier)")]
+    [Header("Movimiento del modelo entre puntos")]
     public Transform[] waypoints;
     public float travelDuration = 3f;
     public AnimationCurve movementCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
@@ -34,7 +34,7 @@ public class DialogueTriggerZone : MonoBehaviour
     [TextArea]
     public string[] dialogueLines;
 
-    [Header("Typewriter")]
+    [Header("Velocidad de escritura")]
     public float typewriterSpeed = 0.03f;
     public float postLineDelay = 1.0f;
 

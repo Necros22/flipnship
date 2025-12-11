@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 
 public class Test : MonoBehaviour
+    //Este script era para probar los botones, si se borra es posible que se caiga todo
 {
-    private int test4Counter = 0;    // ← contador interno
-    private bool test4Blocked = false; // ← bloqueo permanente
-
+    private int test4Counter = 0;
+    private bool test4Blocked = false;
     public void test1()
     {
         print("Botón 1 Funcional");
@@ -23,7 +23,7 @@ public class Test : MonoBehaviour
     public void test4()
     {
         if (test4Blocked)
-            return; // Ya no hace nada
+            return;
 
         test4Counter++;
         print("Botón de reinicio Funcional");

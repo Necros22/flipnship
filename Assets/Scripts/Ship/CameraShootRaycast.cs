@@ -36,7 +36,7 @@ public class CameraShootRaycast : MonoBehaviour
     [Header("Tipo de Disparo Actual")]
     public ShotType currentShotType = ShotType.AntiGravity;
 
-    [Header("UI – Iconos del HUD de disparos")]
+    [Header("Iconos de Disparo")]
     public ShotUI antiGravityUI;
     public ShotUI zeroGravityUI;
     public ShotUI maxGravityUI;
@@ -68,8 +68,10 @@ public class CameraShootRaycast : MonoBehaviour
     void Start()
     {
         cam = Camera.main;
-        ignorePlayerMask = ~LayerMask.GetMask("Player");
+
+        ignorePlayerMask = ~LayerMask.GetMask("Player", "DialogTrigger");
     }
+
 
     void Update()
     {
@@ -272,15 +274,12 @@ public class CameraShootRaycast : MonoBehaviour
         if (activeLaser != null)
             Destroy(activeLaser);
 
-        // Crear láser
         activeLaser = Instantiate(laserPrefab, origin, Quaternion.LookRotation(direction));
 
-        // Estirar en Z
         Vector3 scale = activeLaser.transform.localScale;
         scale.z = length;
         activeLaser.transform.localScale = scale;
 
-        // 🔥 MOVERLO HACIA ADELANTE LA MITAD DEL LARGO
         activeLaser.transform.position += direction * (length * 0.5f);
 
         MeshRenderer r = activeLaser.GetComponent<MeshRenderer>();

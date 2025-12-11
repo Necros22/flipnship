@@ -2,21 +2,22 @@
 using System.Collections;
 
 public class GravityControl : MonoBehaviour
+    //NO TOQUES GRAVITYCONTROL YA HABLAMOS DE ESO
 {
-    [Header("Referencia al objeto que contiene los props con CustomDirectionalGravity")]
-    public GameObject gravityAnchor;
+    [Header("Referencia al objeto con CustomDirectionalGravity")]
+    public GameObject gravityAnchor; 
 
     [Header("Referencia a la cámara que debe rotar")]
     public Transform cameraHolder;
     public Transform dialogueMovementPoints;
-    public Transform flipModel; // extraObjectToMoveForward
+    public Transform flipModel;
 
-    [Header("Referencia a la nave (MovementShip)")]
+    [Header("Referencia a la nave")]
     public MovementShip shipMovement;
 
     [Header("Permisos de cambio de gravedad")]
-    public bool allowRotateQ = true;   // habilita/deshabilita la rotación con Q
-    public bool allowRotateE = true;   // habilita/deshabilita la rotación con E
+    public bool allowRotateQ = true;
+    public bool allowRotateE = true;
 
     private float rotationStep = 90f;
     private bool isRotating = false;
@@ -28,7 +29,7 @@ public class GravityControl : MonoBehaviour
     {
         if (gravityAnchor == null || cameraHolder == null) return;
 
-        // ------------ ROTACIÓN CON Q ------------
+       
         if (Input.GetKeyDown(KeyCode.Q) && !isRotating && allowRotateQ)
         {
             RotateGravity(-1);
@@ -36,7 +37,6 @@ public class GravityControl : MonoBehaviour
             UpdateRotationIndex(+1);
         }
 
-        // ------------ ROTACIÓN CON E ------------
         if (Input.GetKeyDown(KeyCode.E) && !isRotating && allowRotateE)
         {
             RotateGravity(1);

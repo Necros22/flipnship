@@ -8,11 +8,11 @@ public class HealthControl : MonoBehaviour
     [Range(1, 5)]
     public int currentHealth = 5;
 
-    [Header("Imágenes de vida (5 variantes)")]
+    [Header("Imágenes de vida")]
     public Image healthImageUI;
     public Sprite[] healthSprites;
 
-    [Header("Escena a recargar cuando muere")]
+    [Header("Escena de muerte")]
     public string sceneToReload;
 
     [Header("Configuración de daño")]

@@ -2,12 +2,12 @@
 
 public class MovementShip : MonoBehaviour
 {
-    [Header("Movement Settings")]
+    [Header("Movimiento")]
     [SerializeField] private float forwardSpeed = 5f;
     [SerializeField] private float boostedForwardSpeed = 12f;
     [SerializeField] private float lateralSpeed = 5f;
 
-    [Header("Optional Camera Forward Movement")]
+    [Header("Movimiento opcional de cámara")]
     public Transform cameraToMoveForward;
     [SerializeField] private bool cameraMovesForward = true;
 
@@ -15,10 +15,10 @@ public class MovementShip : MonoBehaviour
     public Transform extraObjectToMoveForward;
     public bool extraObjectMovesForward = true;
 
-    [Header("Dialogue Movement Points")]
+    [Header("Puntos de diálogo")]
     public Transform dialogueMovementPoints;
 
-    [Header("Camera Intro Animation")]
+    [Header("Cámara intro")]
     public Transform cameraPivotTarget;
     [SerializeField] private float cameraDelay = 2f;
     [SerializeField] private float cameraMoveDuration = 3f;
@@ -30,29 +30,29 @@ public class MovementShip : MonoBehaviour
     private Vector3 camStartPos;
     private Quaternion camStartRot;
 
-    [Header("GravityControl Settings To Apply After Intro")]
+    [Header("Post-intro GravityControl")]
     public GravityControl gravityControl;
     public bool enableRotateQ = true;
     public bool enableRotateE = true;
 
-    [Header("CameraShootRaycast Settings To Apply After Intro")]
+    [Header("Post-Intro CameraShootRaycast")]
     public CameraShootRaycast raycastShoot;
     public bool enableShooting = true;
     public bool enableAntiGravityShot = true;
     public bool enableZeroGravityShot = true;
     public bool enableMaxGravityShot = true;
 
-    [Header("Ship Model (for tilting)")]
+    [Header("Ship Model Rotación Diálogo")]
     public GameObject ship;
 
-    [Header("Movement Limits")]
+    [Header("Límite de movimiento")]
     [SerializeField] private bool useLimits = true;
     [SerializeField] private float minX = -5f;
     [SerializeField] private float maxX = 5f;
     [SerializeField] private float minY = -3f;
     [SerializeField] private float maxY = 3f;
 
-    [Header("Rotation Settings")]
+    [Header("Rotación Opciones")]
     [SerializeField] private float maxRotationAngle = 30f;
     [SerializeField] private float rotationSmooth = 5f;
 
@@ -64,7 +64,7 @@ public class MovementShip : MonoBehaviour
     private float verticalInput;
     private int cameraRotIndex = 0;
 
-    [Header("SFX Settings")]
+    [Header("SFX Opciones")]
     public AudioSource gravityChangeSFX;
 
     public void SetRotationIndex(int index)

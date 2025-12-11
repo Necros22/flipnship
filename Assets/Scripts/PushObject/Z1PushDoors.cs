@@ -8,8 +8,8 @@ public class Z1PushDoors : MonoBehaviour
     public PuertaLado puertaLado = PuertaLado.Izquierda;
 
     [Header("Movimiento")]
-    public float distanciaPorUso = 0.2f;   // cuánto se mueve por llamada
-    public float velocidad = 3f;          // qué tan rápido se mueve
+    public float distanciaPorUso = 0.2f;
+    public float velocidad = 3f;
 
     [Header("Límite de usos")]
     public int usosMaximos = 5;
@@ -23,14 +23,12 @@ public class Z1PushDoors : MonoBehaviour
         posicionInicial = transform.localPosition;
     }
 
-    /// <summary>
-    /// Llama esta función desde otro script para mover la puerta.
-    /// </summary>
+    
     public void ActivarPuerta()
     {
         if (usosActuales >= usosMaximos)
         {
-            Debug.Log("La puerta ya no se puede activar más.");
+            Debug.Log("La puerta ya no se puede activar más");
             return;
         }
 
