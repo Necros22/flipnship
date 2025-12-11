@@ -4,9 +4,6 @@ using TMPro;
 
 public class DialogueTriggerZone : MonoBehaviour
 {
-    // =========================================================
-    //                 TIME SCALE + CAMERA FOV FADE
-    // =========================================================
     [Header("Tiempo para hacer fade a TimeScale=0")]
     public float fadeDuration = 0.5f;
 
@@ -16,76 +13,57 @@ public class DialogueTriggerZone : MonoBehaviour
     public AnimationCurve fovCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
     private float originalFOV;
 
-    // =========================================================
-    //                 GAMEPLAY SYSTEMS TO DISABLE
-    // =========================================================
     [Header("Referencias externas")]
     public GravityControl gravityControl;
     public CameraShootRaycast cameraShoot;
 
-    // =========================================================
-    //                 INTRO MODEL APPEAR
-    // =========================================================
     [Header("Intro – Modelo que aparecerá")]
     public GameObject modelToActivate;
     private Animator modelAnimator;
 
-    // =========================================================
-    //               MOVIMIENTO BEZIER
-    // =========================================================
     [Header("Movimiento del modelo entre puntos (Bezier)")]
     public Transform[] waypoints;
     public float travelDuration = 3f;
     public AnimationCurve movementCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
     public bool drawCurve = true;
 
-    // =========================================================
-    //                    DIALOG SYSTEM
-    // =========================================================
     [Header("Panel y diálogos")]
-    public GameObject dialoguePanel;       // Panel a activar (arrastrar)
-    public TMP_Text dialogueTMP;           // TextMeshPro dentro del panel (arrastrar)
+    public GameObject dialoguePanel;
+    public TMP_Text dialogueTMP;
 
     [TextArea]
-    public string[] dialogueLines;         // Array de diálogos (arrastrar/llenar)
+    public string[] dialogueLines;
 
-    [Header("Typewriter / Timings")]
-    public float typewriterSpeed = 0.03f;  // tiempo entre caracteres (segundos, real time)
-    public float postLineDelay = 1.0f;     // <-- TIEMPO que se espera después de terminar cada línea (inspector)
+    [Header("Typewriter")]
+    public float typewriterSpeed = 0.03f;
+    public float postLineDelay = 1.0f;
 
     private bool alreadyTriggered = false;
 
-    // =========================================================
-    //     MODIFICACIÓN OPCIONAL DE PARÁMETROS EXTERNOS
-    // =========================================================
     [Header("Modificar parámetros externos al finalizar")]
     public bool modifyExternalParameters = false;
 
-    [Header("GravityControl – Ajustes")]
+    [Header("GravityControl Ajustes")]
     public bool set_allowRotateQ = true;
     public bool set_allowRotateE = true;
 
-    [Header("CameraShootRaycast – Ajustes")]
+    [Header("CameraShootRaycast Ajustes")]
     public bool set_shootingEnabled = true;
 
     public bool set_unlockAntiGravity = true;
     public bool set_unlockZeroGravity = true;
     public bool set_unlockMaxGravity = true;
 
-
-    // Ejecutado solo si modifyExternalParameters == true
     private void ApplyExternalParameterChanges()
     {
         if (!modifyExternalParameters) return;
 
-        // GRAVITY CONTROL
         if (gravityControl != null)
         {
             gravityControl.allowRotateQ = set_allowRotateQ;
             gravityControl.allowRotateE = set_allowRotateE;
         }
 
-        // CAMERA SHOOT SYSTEM
         if (cameraShoot != null)
         {
             cameraShoot.shootingEnabled = set_shootingEnabled;
@@ -96,10 +74,6 @@ public class DialogueTriggerZone : MonoBehaviour
         }
     }
 
-
-    // =========================================================
-    //                    TRIGGER ENTER
-    // =========================================================
     private void OnTriggerEnter(Collider other)
     {
         if (alreadyTriggered) return;
@@ -115,9 +89,6 @@ public class DialogueTriggerZone : MonoBehaviour
         StartCoroutine(FadeSequence());
     }
 
-    // =========================================================
-    //                  DISABLE GAMEPLAY
-    // =========================================================
     private void DisableGameplay()
     {
         if (gravityControl != null)
@@ -130,9 +101,6 @@ public class DialogueTriggerZone : MonoBehaviour
             cameraShoot.shootingEnabled = false;
     }
 
-    // =========================================================
-    //                  FOV + TIMESCALE FADE
-    // =========================================================
     private IEnumerator FadeSequence()
     {
         float startTS = Time.timeScale;
@@ -159,7 +127,6 @@ public class DialogueTriggerZone : MonoBehaviour
         if (targetCamera != null)
             targetCamera.fieldOfView = targetFOV;
 
-        // activar modelo
         if (modelToActivate != null)
         {
             modelToActivate.SetActive(true);
@@ -169,14 +136,10 @@ public class DialogueTriggerZone : MonoBehaviour
                 modelAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
         }
 
-        // iniciar movimiento
         if (waypoints != null && waypoints.Length >= 2)
             StartCoroutine(MoveOnCurve());
     }
 
-    // =========================================================
-    //                 MOVIMIENTO BEZIER (IDEM)
-    // =========================================================
     private IEnumerator MoveOnCurve()
     {
         float t = 0f;
@@ -198,44 +161,29 @@ public class DialogueTriggerZone : MonoBehaviour
             yield return null;
         }
 
-        // Cuando termina el movimiento → INICIA DIÁLOGOS
         StartCoroutine(StartDialogueSequence());
     }
 
-    // =========================================================
-    //                 DIALOG SEQUENCE
-    // =========================================================
     private IEnumerator StartDialogueSequence()
     {
         if (dialoguePanel != null)
             dialoguePanel.SetActive(true);
 
         if (dialogueTMP == null)
-        {
-            Debug.LogWarning("Dialogue TMP not assigned.");
             yield break;
-        }
 
         for (int i = 0; i < dialogueLines.Length; i++)
         {
-            // Typewriter: escribe texto
             yield return StartCoroutine(Typewriter(dialogueLines[i]));
-
-            // Espera el tiempo configurado en el inspector después de terminar la línea
             yield return new WaitForSecondsRealtime(postLineDelay);
         }
 
-        // Terminar diálogos
         if (dialoguePanel != null)
             dialoguePanel.SetActive(false);
 
-        // Iniciar recorrido invertido
         StartCoroutine(ReturnMovement());
     }
 
-    // =========================================================
-    //                 TYPEWRITER EFFECT
-    // =========================================================
     private IEnumerator Typewriter(string text)
     {
         dialogueTMP.text = "";
@@ -243,16 +191,10 @@ public class DialogueTriggerZone : MonoBehaviour
         for (int i = 0; i < text.Length; i++)
         {
             dialogueTMP.text += text[i];
-
-            // espera entre caracteres (tiempo real, no afectado por timescale)
             yield return new WaitForSecondsRealtime(typewriterSpeed);
         }
-        // Aquí justo termina la escritura de la última tecla -> empieza el postLineDelay en StartDialogueSequence
     }
 
-    // =========================================================
-    //                 MOVIMIENTO REVERSE
-    // =========================================================
     private IEnumerator ReturnMovement()
     {
         float t = 0f;
@@ -282,15 +224,10 @@ public class DialogueTriggerZone : MonoBehaviour
         RestoreEverything();
     }
 
-    // =========================================================
-    //                     RESTORE SYSTEM
-    // =========================================================
     private void RestoreEverything()
     {
-        // restaurar tiempo
         Time.timeScale = 1f;
 
-        // restaurar gameplay básico
         if (gravityControl != null)
         {
             gravityControl.allowRotateQ = true;
@@ -300,19 +237,15 @@ public class DialogueTriggerZone : MonoBehaviour
         if (cameraShoot != null)
             cameraShoot.shootingEnabled = true;
 
-        // restaurar FOV
         if (targetCamera != null)
             StartCoroutine(SmoothReturnFOV());
 
-        // aplicar modificaciones personalizadas si están activadas
         ApplyExternalParameterChanges();
     }
 
-
-
     private IEnumerator SmoothReturnFOV()
     {
-        float duration = fadeDuration;        // usa el mismo tiempo o puedes hacer otro si quieres
+        float duration = fadeDuration;
         float t = 0f;
 
         float startFOV = targetCamera.fieldOfView;
@@ -320,22 +253,18 @@ public class DialogueTriggerZone : MonoBehaviour
 
         while (t < duration)
         {
-            t += Time.unscaledDeltaTime;          // usa tiempo real
+            t += Time.unscaledDeltaTime;
             float lerp = t / duration;
 
-            float curved = fovCurve.Evaluate(lerp);   // usa la misma curva de entrada
+            float curved = fovCurve.Evaluate(lerp);
             targetCamera.fieldOfView = Mathf.Lerp(startFOV, endFOV, curved);
 
             yield return null;
         }
 
-        targetCamera.fieldOfView = endFOV; // asegurar valor final exacto
+        targetCamera.fieldOfView = endFOV;
     }
 
-
-    // =========================================================
-    //                BEZIER CALCULATION
-    // =========================================================
     private Vector3 GetBezierPosition(float t)
     {
         if (waypoints == null || waypoints.Length == 0) return Vector3.zero;
@@ -364,7 +293,6 @@ public class DialogueTriggerZone : MonoBehaviour
 
     private Quaternion GetBezierRotation(float t)
     {
-        // Si estamos al final exacto del recorrido → usar forward del último waypoint
         if (t >= 0.999f)
         {
             Transform last = waypoints[waypoints.Length - 1];
@@ -379,9 +307,6 @@ public class DialogueTriggerZone : MonoBehaviour
         return dir == Vector3.zero ? Quaternion.identity : Quaternion.LookRotation(dir);
     }
 
-    // =========================================================
-    //                 DRAW CURVE IN EDITOR
-    // =========================================================
     private void OnDrawGizmos()
     {
         if (!drawCurve || waypoints == null || waypoints.Length < 2)

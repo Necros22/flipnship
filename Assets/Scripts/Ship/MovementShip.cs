@@ -2,55 +2,34 @@
 
 public class MovementShip : MonoBehaviour
 {
-    // -----------------------------------------------------
-    //                 MOVEMENT SETTINGS
-    // -----------------------------------------------------
     [Header("Movement Settings")]
     [SerializeField] private float forwardSpeed = 5f;
     [SerializeField] private float boostedForwardSpeed = 12f;
-
     [SerializeField] private float lateralSpeed = 5f;
 
-    // -----------------------------------------------------
-    //        OPTIONAL CAMERA FORWARD MOVEMENT
-    // -----------------------------------------------------
     [Header("Optional Camera Forward Movement")]
     public Transform cameraToMoveForward;
     [SerializeField] private bool cameraMovesForward = true;
 
-    // -----------------------------------------------------
-    //       FLIP MODEL MOVEMENT + ROTATION (MODIFICADO)
-    // -----------------------------------------------------
     [Header("Flip Model")]
     public Transform extraObjectToMoveForward;
     public bool extraObjectMovesForward = true;
 
-    // -----------------------------------------------------
-    //          DIALOGUE MOVEMENT POINTS (NUEVO)
-    // -----------------------------------------------------
     [Header("Dialogue Movement Points")]
     public Transform dialogueMovementPoints;
 
-    // -----------------------------------------------------
-    //         CAMERA INTRO ANIMATION
-    // -----------------------------------------------------
     [Header("Camera Intro Animation")]
     public Transform cameraPivotTarget;
     [SerializeField] private float cameraDelay = 2f;
     [SerializeField] private float cameraMoveDuration = 3f;
-
     [SerializeField] private GameObject objectToDisableAfterIntro;
 
     private bool cameraAnimationStarted = false;
     private bool cameraAnimationFinished = false;
     private float cameraAnimationTimer = 0f;
-
     private Vector3 camStartPos;
     private Quaternion camStartRot;
 
-    // -----------------------------------------------------
-    //   REFERENCES TO EXTERNAL SYSTEMS
-    // -----------------------------------------------------
     [Header("GravityControl Settings To Apply After Intro")]
     public GravityControl gravityControl;
     public bool enableRotateQ = true;
@@ -63,15 +42,9 @@ public class MovementShip : MonoBehaviour
     public bool enableZeroGravityShot = true;
     public bool enableMaxGravityShot = true;
 
-    // -----------------------------------------------------
-    //                     SHIP MODEL
-    // -----------------------------------------------------
     [Header("Ship Model (for tilting)")]
     public GameObject ship;
 
-    // -----------------------------------------------------
-    //                    LIMITS
-    // -----------------------------------------------------
     [Header("Movement Limits")]
     [SerializeField] private bool useLimits = true;
     [SerializeField] private float minX = -5f;
@@ -79,16 +52,10 @@ public class MovementShip : MonoBehaviour
     [SerializeField] private float minY = -3f;
     [SerializeField] private float maxY = 3f;
 
-    // -----------------------------------------------------
-    //                    ROTATION
-    // -----------------------------------------------------
     [Header("Rotation Settings")]
     [SerializeField] private float maxRotationAngle = 30f;
     [SerializeField] private float rotationSmooth = 5f;
 
-    // -----------------------------------------------------
-    //                    CONTROL
-    // -----------------------------------------------------
     [Header("Control")]
     public bool movementEnabled = true;
     public bool allowDirectionalMovement = false;
@@ -97,20 +64,13 @@ public class MovementShip : MonoBehaviour
     private float verticalInput;
     private int cameraRotIndex = 0;
 
-    // -----------------------------------------------------
-    // ⭐ NUEVO: audio del cambio de gravedad
-    // -----------------------------------------------------
     [Header("SFX Settings")]
     public AudioSource gravityChangeSFX;
-
-
 
     public void SetRotationIndex(int index)
     {
         cameraRotIndex = index;
     }
-
-
 
     void Update()
     {
@@ -118,7 +78,6 @@ public class MovementShip : MonoBehaviour
         if (Time.timeScale == 0f) return;
 
         HandleCameraIntroAnimation();
-
         HandleInput();
         MoveForward();
 
@@ -126,38 +85,21 @@ public class MovementShip : MonoBehaviour
             MoveLaterally();
 
         RotateShip();
-
-        HandleGravityChangeSound();   // ⭐ NUEVO
+        HandleGravityChangeSound();
     }
 
-
-
-    // ========================================================================
-    //        ⭐ NUEVO — SONIDO AL CAMBIAR GRAVEDAD (Q/E)
-    // ========================================================================
     private void HandleGravityChangeSound()
     {
         if (gravityControl == null) return;
         if (gravityChangeSFX == null) return;
 
-        // Q rotation
         if (Input.GetKeyDown(KeyCode.Q) && gravityControl.allowRotateQ)
-        {
             gravityChangeSFX.Play();
-        }
 
-        // E rotation
         if (Input.GetKeyDown(KeyCode.E) && gravityControl.allowRotateE)
-        {
             gravityChangeSFX.Play();
-        }
     }
 
-
-
-    // ========================================================================
-    //            CAMERA INTRO ANIMATION
-    // ========================================================================
     private void HandleCameraIntroAnimation()
     {
         if (cameraToMoveForward == null || cameraPivotTarget == null) return;
@@ -170,10 +112,8 @@ public class MovementShip : MonoBehaviour
             if (cameraDelay <= 0f)
             {
                 cameraAnimationStarted = true;
-
                 camStartPos = cameraToMoveForward.position;
                 camStartRot = cameraToMoveForward.rotation;
-
                 cameraMovesForward = false;
             }
             return;
@@ -181,42 +121,25 @@ public class MovementShip : MonoBehaviour
 
         cameraAnimationTimer += Time.deltaTime;
         float t = cameraAnimationTimer / cameraMoveDuration;
-
         if (t > 1f) t = 1f;
         t = Mathf.SmoothStep(0f, 1f, t);
 
-        cameraToMoveForward.position = Vector3.Lerp(
-            camStartPos,
-            cameraPivotTarget.position,
-            t
-        );
-
-        cameraToMoveForward.rotation = Quaternion.Lerp(
-            camStartRot,
-            cameraPivotTarget.rotation,
-            t
-        );
+        cameraToMoveForward.position = Vector3.Lerp(camStartPos, cameraPivotTarget.position, t);
+        cameraToMoveForward.rotation = Quaternion.Lerp(camStartRot, cameraPivotTarget.rotation, t);
 
         if (t >= 1f)
         {
             cameraAnimationFinished = true;
-
             cameraMovesForward = true;
 
             if (objectToDisableAfterIntro != null)
                 objectToDisableAfterIntro.SetActive(false);
 
             allowDirectionalMovement = true;
-
             ApplyExternalSettings();
         }
     }
 
-
-
-    // ========================================================================
-    //           APPLY SETTINGS TO OTHER SCRIPTS
-    // ========================================================================
     private void ApplyExternalSettings()
     {
         if (gravityControl != null)
@@ -234,11 +157,6 @@ public class MovementShip : MonoBehaviour
         }
     }
 
-
-
-    // ========================================================================
-    //                                INPUT
-    // ========================================================================
     void HandleInput()
     {
         if (!allowDirectionalMovement)
@@ -260,11 +178,6 @@ public class MovementShip : MonoBehaviour
         }
     }
 
-
-
-    // ========================================================================
-    //                      MOVE FORWARD
-    // ========================================================================
     private void MoveForward()
     {
         float currentSpeed = Input.GetKey(KeyCode.Space) ? boostedForwardSpeed : forwardSpeed;
@@ -281,16 +194,9 @@ public class MovementShip : MonoBehaviour
             dialogueMovementPoints.position += new Vector3(0, 0, currentSpeed * Time.deltaTime);
     }
 
-
-
-    // ========================================================================
-    //                        MOVE LATERALLY
-    // ========================================================================
     private void MoveLaterally()
     {
-        Vector3 move = new Vector3(horizontalInput, verticalInput, 0)
-                       * lateralSpeed * Time.deltaTime;
-
+        Vector3 move = new Vector3(horizontalInput, verticalInput, 0) * lateralSpeed * Time.deltaTime;
         transform.Translate(move, Space.World);
 
         if (useLimits)
@@ -302,11 +208,6 @@ public class MovementShip : MonoBehaviour
         }
     }
 
-
-
-    // ========================================================================
-    //                          ROTATE SHIP
-    // ========================================================================
     private void RotateShip()
     {
         if (ship == null) return;

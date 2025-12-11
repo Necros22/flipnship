@@ -3,45 +3,33 @@
 public class SawController : MonoBehaviour
 {
     [Header("Configuración")]
-    [Tooltip("Si está activado, esta sierra NO puede ser paralizada por ZeroGravity.")]
-    public bool ignoreParalysis = false;   // <<--- NUEVA VARIABLE
+    public bool ignoreParalysis = false;
 
     [Header("Referencias")]
     public Animator sawAnimator;
-    public GameObject activeCollider;   // Collider grande (encendida)
-    public GameObject offCollider;      // Collider chico (apagada)
+    public GameObject activeCollider;
+    public GameObject offCollider;
 
     [Header("Estado actual")]
     public bool isParalyzed = false;
 
     void Start()
     {
-        SetActiveState(true); // Comienza encendida por defecto
+        SetActiveState(true);
     }
 
-    // Llamado cuando el rayo ZeroGravity la paraliza
     public void Paralyze()
     {
-        // <<--- NUEVA PROTECCIÓN
-        if (ignoreParalysis)
-        {
-            Debug.Log("Sierra con ignoreParalysis activado → no se paraliza.");
-            return;
-        }
-
+        if (ignoreParalysis) return;
         isParalyzed = true;
         SetActiveState(false);
-        Debug.Log("Sierra paralizada");
     }
 
-    // Llamado cuando otro objeto recibe el disparo → esta sierra deja de estar paralizada
     public void UnParalyze()
     {
         if (!isParalyzed) return;
-
         isParalyzed = false;
         SetActiveState(true);
-        Debug.Log("Sierra reactivada");
     }
 
     private void SetActiveState(bool active)
