@@ -436,7 +436,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Creado por\nWilliam Cam & Daniel D\xEDaz"
+  m_text: 'Creado por
+
+    D''Paso Games'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: de973c1bea5a921498fcbd9d6f440627, type: 2}
   m_sharedMaterial: {fileID: -1957702741575399957, guid: de973c1bea5a921498fcbd9d6f440627, type: 2}
@@ -1736,7 +1738,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -53, y: -14.000015}
+  m_AnchoredPosition: {x: -53, y: -14}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1533067779
